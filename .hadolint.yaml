@@ -1,0 +1,6 @@
+failure-threshold: warning
+ignored:
+  - DL3008  # apt package version pinning not practical here
+  - DL3013  # pip package version pinning
+  - DL3009  # apt lists kept on purpose for the cache mount
+  - DL3042  # pip cache dir kept on purpose for the cache mount
