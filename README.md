@@ -93,6 +93,36 @@ In a private LaTeX project, reference the published image directly from your
 Because GHCR images for private packages require authentication, make sure the
 consuming repository has access to the package (or that the package is public).
 
+### Using a locally built image instead of GHCR
+
+If you can't pull from GHCR (no access, offline, air-gapped) or you want to
+modify the image, build it yourself and reference the local tag instead.
+
+From a clone of this repository, build and tag the production image locally:
+
+```bash
+make build-local   # builds + tags latex-infrastructure:local
+```
+
+Then point your consuming repository's `.devcontainer/devcontainer.json` at that
+local tag rather than the GHCR path:
+
+```jsonc
+{
+  "name": "my-latex-project",
+  "image": "latex-infrastructure:local"
+}
+```
+
+A few things to keep in mind:
+
+- The image must exist in the same Docker daemon your Dev Container builds
+  against; Docker won't pull `latex-infrastructure:local` from anywhere, so
+  rebuild it whenever you want updates.
+- To trade off size against package coverage (or otherwise customise the
+  build), override `TEX_IMAGE_TAG`, e.g.
+  `make build-local TEX_IMAGE_TAG=latest-medium`.
+
 ## Publishing
 
 The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the
@@ -113,6 +143,7 @@ Common tasks are wrapped in the [Makefile](Makefile):
 
 ```bash
 make build       # build the production image
+make build-local # build + tag the prod image locally as latex-infrastructure:local
 make build-dev   # build the devcontainer (dev stage) image
 make ci-test     # run hadolint + the LaTeX smoke test suite in Docker
 make lint        # run hadolint against the Dockerfile

@@ -4,7 +4,7 @@ TAG ?= local
 TEX_IMAGE_TAG ?= latest-full
 PROGRESS ?= auto
 
-.PHONY: build build-prod build-dev ci-test lint format-docs check-docs pre-commit install-hooks clean help
+.PHONY: build build-prod build-local build-dev ci-test lint format-docs check-docs pre-commit install-hooks clean help
 
 ## build: alias for build-prod
 build: build-prod
@@ -12,6 +12,9 @@ build: build-prod
 ## build-prod: build the published production image
 build-prod:
 	docker build --target prod --build-arg TEX_IMAGE_TAG=$(TEX_IMAGE_TAG) --progress=$(PROGRESS) -t $(IMAGE):$(TAG) .
+
+## build-local: build + tag the prod image locally as latex-infrastructure:local
+build-local: build-prod
 
 ## build-dev: build the devcontainer (dev stage) image via compose
 build-dev:
