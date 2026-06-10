@@ -1,0 +1,29 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'        # mdformat owns markdown; .editorconfig keeps md trailing ws
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: check-yaml
+      - id: check-json
+        exclude: '^(\.vscode/|\.devcontainer/devcontainer\.json$)'  # these are JSONC (comments)
+      - id: check-executables-have-shebangs
+  - repo: https://github.com/AleksaC/hadolint-py    # pip-packaged hadolint, no docker needed
+    rev: v2.12.0.3
+    hooks:
+      - id: hadolint
+        args: [--config, .hadolint.yaml]
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.22
+    hooks:
+      - id: mdformat
+        additional_dependencies: [mdformat-gfm, mdformat-tables]
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck                  # lints test/run-tests.sh
