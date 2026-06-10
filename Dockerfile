@@ -22,7 +22,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # and tell apt to keep downloaded packages so the cache mounts can reuse them.
 # Set once here in base; inherited by every downstream stage.
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
-    && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+  && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # Bring the full TeX Live tree across from the upstream image, chowning it to
 # the vscode user as part of the copy. Doing it here (rather than a separate
@@ -34,12 +34,14 @@ COPY --from=texlive-source --chown=vscode:vscode /usr/local/texlive /usr/local/t
 # resolve the real directories once at build time and expose them through
 # stable symlinks that the ENV statements below can reference.
 RUN set -eux; \
-    tldir="$(ls -d /usr/local/texlive/20*/ | head -n1)"; \
-    tldir="${tldir%/}"; \
-    ln -s "$tldir" /usr/local/texlive/current; \
-    archbin="$(ls -d /usr/local/texlive/current/bin/*/ | head -n1)"; \
-    archbin="${archbin%/}"; \
-    ln -s "$archbin" /usr/local/texlive/current-bin
+  tldirs=(/usr/local/texlive/20*/); \
+  tldir="${tldirs[0]%/}"; \
+  [ -d "$tldir" ]; \
+  ln -s "$tldir" /usr/local/texlive/current; \
+  archbins=(/usr/local/texlive/current/bin/*/); \
+  archbin="${archbins[0]%/}"; \
+  [ -d "$archbin" ]; \
+  ln -s "$archbin" /usr/local/texlive/current-bin
 
 # Make pdflatex, latexmk, tlmgr, man pages, and info docs available.
 ENV PATH="/usr/local/texlive/current-bin:${PATH}"
@@ -69,32 +71,32 @@ ENV INFOPATH="/usr/local/texlive/current/texmf-dist/doc/info:"
 # are excluded from the committed layer, so the image stays lean without an
 # explicit apt clean (which is why the old clean/rm tail is gone).
 RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
-    --mount=type=cache,target=/var/lib/apt,sharing=shared,uid=0,gid=0 \
-    export DEBIAN_FRONTEND=noninteractive \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        make \
-        perl \
-        python3 \
-        python3-pygments \
-        chktex \
-        ghostscript \
-        fontconfig \
-        git-lfs \
-        cpanminus \
-        libyaml-tiny-perl \
-        libfile-homedir-perl \
-        libunicode-linebreak-perl \
-        pandoc \
-        fonts-liberation \
-        fonts-crosextra-carlito \
-        fonts-crosextra-caladea \
-        fonts-dejavu \
-        fonts-noto-core \
-        fonts-noto-color-emoji \
-        lmodern \
-        fonts-texgyre \
-        fonts-freefont-ttf
+  --mount=type=cache,target=/var/lib/apt,sharing=shared,uid=0,gid=0 \
+  export DEBIAN_FRONTEND=noninteractive \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends \
+  make \
+  perl \
+  python3 \
+  python3-pygments \
+  chktex \
+  ghostscript \
+  fontconfig \
+  git-lfs \
+  cpanminus \
+  libyaml-tiny-perl \
+  libfile-homedir-perl \
+  libunicode-linebreak-perl \
+  pandoc \
+  fonts-liberation \
+  fonts-crosextra-carlito \
+  fonts-crosextra-caladea \
+  fonts-dejavu \
+  fonts-noto-core \
+  fonts-noto-color-emoji \
+  lmodern \
+  fonts-texgyre \
+  fonts-freefont-ttf
 
 # ---------------------------------------------------------------------------
 # prod: the published GHCR image. Just base plus pre-built font caches so the
@@ -125,18 +127,18 @@ USER root
 # apt + pip cache mounts; the keep-cache config from base is inherited. pip's
 # --no-cache-dir is dropped so the cache mount is actually used.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
-    --mount=type=cache,target=/var/lib/apt,sharing=shared,uid=0,gid=0 \
-    --mount=type=cache,target=/root/.cache/pip,sharing=shared,uid=0,gid=0 \
-    export DEBIAN_FRONTEND=noninteractive \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends python3-venv \
-    && python3 -m venv /opt/docs-tools \
-    && /opt/docs-tools/bin/pip install \
-        mdformat \
-        mdformat-gfm \
-        mdformat-tables \
-        pre-commit \
-    && ln -s /opt/docs-tools/bin/mdformat /usr/local/bin/mdformat \
-    && ln -s /opt/docs-tools/bin/pre-commit /usr/local/bin/pre-commit
+  --mount=type=cache,target=/var/lib/apt,sharing=shared,uid=0,gid=0 \
+  --mount=type=cache,target=/root/.cache/pip,sharing=shared,uid=0,gid=0 \
+  export DEBIAN_FRONTEND=noninteractive \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends python3-venv gh \
+  && python3 -m venv /opt/docs-tools \
+  && /opt/docs-tools/bin/pip install \
+  mdformat \
+  mdformat-gfm \
+  mdformat-tables \
+  pre-commit \
+  && ln -s /opt/docs-tools/bin/mdformat /usr/local/bin/mdformat \
+  && ln -s /opt/docs-tools/bin/pre-commit /usr/local/bin/pre-commit
 USER vscode
 CMD ["sleep", "infinity"]

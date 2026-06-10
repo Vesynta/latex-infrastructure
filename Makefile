@@ -26,7 +26,7 @@ ci-test:
 
 ## lint: run hadolint against the Dockerfile
 lint:
-	docker run --rm -i -v "$(CURDIR)/.hadolint.yaml:/.hadolint.yaml:ro" hadolint/hadolint hadolint --config /.hadolint.yaml - < Dockerfile
+	docker run --rm -v "$(CURDIR):/work:ro" -w /work hadolint/hadolint hadolint --config .hadolint.yaml Dockerfile
 
 ## format-docs: format markdown with mdformat
 format-docs:
