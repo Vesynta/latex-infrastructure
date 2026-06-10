@@ -25,6 +25,8 @@ step "tooling versions"
 tlmgr --version
 pdflatex --version
 pandoc --version
+node --version
+npm --version
 
 step "pdflatex compile (latexmk -pdf)"
 latexmk -pdf -interaction=nonstopmode -halt-on-error sample.tex

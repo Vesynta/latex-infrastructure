@@ -60,6 +60,7 @@ ENV INFOPATH="/usr/local/texlive/current/texmf-dist/doc/info:"
 #   - git-lfs: large-file support for project assets
 #   - cpanminus + lib*-perl: runtime deps for latexindent
 #   - pandoc: native Word (docx) and other-format export
+#   - nodejs/npm: Node-based devcontainer features (e.g. Claude Code)
 # Font packages (registered by fc-cache in the prod stage) give pandoc and
 # the LaTeX engines broad, high-quality coverage:
 #   - fonts-liberation: Arial/Times/Courier metric-compatible (Word classics)
@@ -88,6 +89,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
   libfile-homedir-perl \
   libunicode-linebreak-perl \
   pandoc \
+  nodejs \
+  npm \
   fonts-liberation \
   fonts-crosextra-carlito \
   fonts-crosextra-caladea \

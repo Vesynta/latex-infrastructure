@@ -23,8 +23,9 @@ ghcr.io/vesynta/latex-infrastructure
 - Pre-built font caches (`luaotfload-tool` and `fontconfig`) so the first
   compilation isn't slowed down by cache generation.
 - Common tooling: `make`, `perl`, `python3`, `python3-pygments` (for `minted`),
-  `chktex`, `ghostscript`, `git-lfs`, and the Perl modules required by
-  `latexindent`.
+  `chktex`, `ghostscript`, `git-lfs`, `nodejs`, `npm`, and the Perl modules
+  required by `latexindent`. Node is included so Node-based devcontainer
+  features such as Claude Code work out of the box.
 - `pandoc` plus a broad, high-quality font set (Liberation, Carlito/Caladea,
   DejaVu, Noto, TeX Gyre, Latin Modern, FreeFont) so native Word (`docx`)
   export and other conversions render with proper fonts.
