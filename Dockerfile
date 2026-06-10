@@ -68,8 +68,8 @@ ENV INFOPATH="/usr/local/texlive/current/texmf-dist/doc/info:"
 # Cache mounts let repeat builds reuse the downloaded .debs and apt lists. They
 # are excluded from the committed layer, so the image stays lean without an
 # explicit apt clean (which is why the old clean/rm tail is gone).
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
+    --mount=type=cache,target=/var/lib/apt,sharing=shared,uid=0,gid=0 \
     export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -124,9 +124,9 @@ FROM test AS dev
 USER root
 # apt + pip cache mounts; the keep-cache config from base is inherited. pip's
 # --no-cache-dir is dropped so the cache mount is actually used.
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
-    --mount=type=cache,target=/root/.cache/pip,sharing=locked,uid=0,gid=0 \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
+    --mount=type=cache,target=/var/lib/apt,sharing=shared,uid=0,gid=0 \
+    --mount=type=cache,target=/root/.cache/pip,sharing=shared,uid=0,gid=0 \
     export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install -y --no-install-recommends python3-venv \
