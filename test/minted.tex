@@ -1,0 +1,17 @@
+\documentclass{article}
+
+% minted shells out to pygmentize, so this must be compiled with
+% -shell-escape and requires python3-pygments to be installed.
+\usepackage{minted}
+
+\begin{document}
+
+\begin{minted}{python}
+def greet(name: str) -> str:
+    return f"hello, {name}"
+
+
+print(greet("latex"))
+\end{minted}
+
+\end{document}

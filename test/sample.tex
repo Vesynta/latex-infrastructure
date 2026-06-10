@@ -1,0 +1,22 @@
+\documentclass{article}
+
+% Exercised by both pdflatex and lualatex. fontspec only loads under the
+% unicode engines, so guard it; pdflatex falls back to the default fonts.
+\usepackage{iftex}
+\ifLuaTeX
+  \usepackage{fontspec}
+\fi
+\usepackage{amsmath}
+
+\title{latex-infrastructure smoke test}
+\author{CI}
+
+\begin{document}
+\maketitle
+
+A minimal document that exercises the core engines and a little math:
+\[
+  E = mc^2, \qquad \int_0^1 x^2 \, \mathrm{d}x = \frac{1}{3}.
+\]
+
+\end{document}
