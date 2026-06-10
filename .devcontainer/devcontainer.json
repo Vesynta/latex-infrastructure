@@ -1,0 +1,44 @@
+{
+  "name": "latex-infrastructure (maintenance)",
+  "dockerComposeFile": "docker-compose.yaml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  // Install the git pre-commit hook and pre-warm the hook environments so the
+  // first commit isn't slow. Commits are expected to happen inside the
+  // container (the generated hook references the container's pre-commit).
+  "postCreateCommand": "make install-hooks && pre-commit install-hooks",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": false,
+      "installDockerBuildx": true,
+      "installDockerCompose": true
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "James-Yu.latex-workshop",
+        // --- Formatters & linters (mirror .vscode/settings.json) ---
+        "exiasr.hadolint",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-containers",
+        "bittorala.mdformat",
+        "DavidAnson.vscode-markdownlint",
+        "TakumiI.markdowntable",
+        "ms-python.python",
+        "editorconfig.editorconfig",
+        // --- Collaboration & Utilities ---
+        "GitHub.vscode-pull-request-github",
+        "ms-vsliveshare.vsliveshare",
+        "streetsidesoftware.code-spell-checker",
+        "streetsidesoftware.code-spell-checker-cspell-bundled-dictionaries",
+        "mproberts.vscode-pre-commit", // Pre-commit hook visual support
+        "usernamehw.errorlens" // Highlights errors/warnings inline in the editor
+      ]
+    },
+    "settings": {
+      "extensions.ignoreRecommendations": true
+    }
+  },
+  "remoteUser": "vscode"
+}
