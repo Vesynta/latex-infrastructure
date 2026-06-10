@@ -1,0 +1,26 @@
+name: CI Test
+
+on:
+  push:
+    branches: ["dev", "main"]
+  pull_request:
+    branches: ["dev", "main"]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+jobs:
+  ci-test:
+    name: Run Dockerized Test Suite
+    runs-on: [self-hosted, linux]
+    # Skip draft PRs.
+    if: github.event.pull_request.draft != true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run CI Tests via Docker
+        run: make ci-test
+
+      - name: Tear down test stack
+        if: always()
+        run: make clean
