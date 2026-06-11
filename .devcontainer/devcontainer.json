@@ -32,6 +32,7 @@
         "TakumiI.markdowntable",
         "ms-python.python",
         "editorconfig.editorconfig",
+        "ms-vscode.makefile-tools",
         // --- Collaboration & Utilities ---
         "GitHub.vscode-pull-request-github",
         "ms-vsliveshare.vsliveshare",
