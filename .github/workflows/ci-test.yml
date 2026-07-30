@@ -11,7 +11,7 @@ on:
 jobs:
   ci-test:
     name: Run Dockerized Test Suite
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, Linux]
     # Skip draft PRs.
     if: github.event.pull_request.draft != true
     steps:

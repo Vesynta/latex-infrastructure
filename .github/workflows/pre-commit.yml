@@ -9,7 +9,7 @@ on:
 
 jobs:
   pre-commit:
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, Linux]
     if: github.event.pull_request.draft != true
     steps:
       - uses: actions/checkout@v6
