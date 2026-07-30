@@ -1,81 +1,86 @@
 {
-    // -----------------------------------
-    // General Editor & Workspace Settings
-    // -----------------------------------
-    // Line endings, trailing whitespace, and final newlines are owned by
-    // `.editorconfig` at the repo root (VS Code reads it natively).
-    //
-    // Format every file with a registered formatter on save. Each language
-    // block below names that formatter explicitly so contributors can see
-    // at a glance who owns the layout — and don't paste hand-formatted
-    // code expecting it to survive the next save.
+  // -----------------------------------
+  // General Editor & Workspace Settings
+  // -----------------------------------
+  // Line endings, trailing whitespace, and final newlines are owned by
+  // `.editorconfig` at the repo root (VS Code reads it natively).
+  //
+  // Format every file with a registered formatter on save. Each language
+  // block below names that formatter explicitly so contributors can see
+  // at a glance who owns the layout — and don't paste hand-formatted
+  // code expecting it to survive the next save.
+  "editor.formatOnSave": true,
+  // -------------------------------------------
+  // Formatters (one per language; no global default)
+  // -------------------------------------------
+  "[json]": {
+    // Devcontainer lock files and similar machine-generated JSON use
+    // JSON.stringify-style spacing. Stick with the built-in formatter
+    // so the editor agrees with whatever wrote the file.
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.formatOnSave": true
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers",
+    "editor.formatOnSave": true
+  },
+  "[latex]": {
+    "editor.defaultFormatter": "James-Yu.latex-workshop",
+    "editor.formatOnSave": true
+  },
+  "[markdown]": {
+    // mdformat (Python) is the authoritative markdown formatter for
+    // this repo. The VS Code extension `bittorala.mdformat` invokes
+    // `python -m mdformat` so save-in-editor matches `make format-docs`
+    // and CI exactly. The interpreter is pinned via `mdformat.pythonPath`
+    // below.
+    "editor.defaultFormatter": "bittorala.mdformat",
     "editor.formatOnSave": true,
-    // -------------------------------------------
-    // Formatters (one per language; no global default)
-    // -------------------------------------------
-    "[json]": {
-        // Devcontainer lock files and similar machine-generated JSON use
-        // JSON.stringify-style spacing. Stick with the built-in formatter
-        // so the editor agrees with whatever wrote the file.
-        "editor.defaultFormatter": "vscode.json-language-features",
-        "editor.formatOnSave": true
-    },
-    "[jsonc]": {
-        "editor.defaultFormatter": "vscode.json-language-features",
-        "editor.formatOnSave": true
-    },
-    "[yaml]": {
-        "editor.defaultFormatter": "redhat.vscode-yaml",
-        "editor.formatOnSave": true
-    },
-    "[dockerfile]": {
-        "editor.defaultFormatter": "ms-azuretools.vscode-containers",
-        "editor.formatOnSave": true
-    },
-    "[markdown]": {
-        // mdformat (Python) is the authoritative markdown formatter for
-        // this repo. The VS Code extension `bittorala.mdformat` invokes
-        // `python -m mdformat` so save-in-editor matches `make format-docs`
-        // and CI exactly. The interpreter is pinned via `mdformat.pythonPath`
-        // below.
-        "editor.defaultFormatter": "bittorala.mdformat",
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.fixAll.markdownlint": "explicit"
-        }
-    },
-    // mdformat lives in the dev-stage venv (/opt/docs-tools), not on the
-    // system python. Point the extension straight at that interpreter so
-    // save-in-editor matches `make format-docs` and CI exactly.
-    "mdformat.pythonPath": "/opt/docs-tools/bin/python",
-    // Markdown tables: mdformat-tables owns column alignment. Keep the
-    // TakumiI.markdowntable menu commands for ad-hoc CSV/TSV → table
-    // conversion, but never let the extension format on save (it would
-    // fight mdformat's column-width calculation).
-    "markdowntable.formatOnSave": false,
-    "markdowntable.showMenu.csvToTable": true,
-    "markdowntable.showMenu.tsvToTable": true,
-    // ---------------------
-    // Version Control (Git)
-    // ---------------------
-    // Good defaults for a team workflow
-    "git.autofetch": true,
-    "git.branchProtection": [
-        "main",
-        "dev"
-    ],
-    "git.defaultBranchName": "dev",
-    "git.ignoreRebaseWarning": true,
-    "git.pullBeforeCheckout": true,
-    "githubPullRequests.createDefaultBaseBranch": "auto",
-    // --------
-    // Spelling
-    // --------
-    "cSpell.language": "en, en-US",
-    "cSpell.dictionaries": [
-        "latex"
-    ],
-    "dataWrangler.experiments.autoDetectCsvDelimiter": true,
-    "hadolint.hadolintPath": "hadolint",
-    "telemetry.telemetryLevel": "off"
+    "editor.codeActionsOnSave": {
+      "source.fixAll.markdownlint": "explicit"
+    }
+  },
+  // mdformat lives in the dev-stage venv (/opt/docs-tools), not on the
+  // system python. Point the extension straight at that interpreter so
+  // save-in-editor matches `make format-docs` and CI exactly.
+  "mdformat.pythonPath": "/opt/docs-tools/bin/python",
+  "latex-workshop.formatting.latex": "latexindent",
+  // Markdown tables: mdformat-tables owns column alignment. Keep the
+  // TakumiI.markdowntable menu commands for ad-hoc CSV/TSV → table
+  // conversion, but never let the extension format on save (it would
+  // fight mdformat's column-width calculation).
+  "markdowntable.formatOnSave": false,
+  "markdowntable.showMenu.csvToTable": true,
+  "markdowntable.showMenu.tsvToTable": true,
+  // ---------------------
+  // Version Control (Git)
+  // ---------------------
+  // Good defaults for a team workflow
+  "git.autofetch": true,
+  "git.branchProtection": [
+    "main",
+    "dev"
+  ],
+  "git.defaultBranchName": "dev",
+  "git.ignoreRebaseWarning": true,
+  "git.pullBeforeCheckout": true,
+  "githubPullRequests.createDefaultBaseBranch": "auto",
+  // --------
+  // Spelling
+  // --------
+  "cSpell.language": "en, en-US",
+  "cSpell.dictionaries": [
+    "latex"
+  ],
+  "dataWrangler.experiments.autoDetectCsvDelimiter": true,
+  "hadolint.hadolintPath": "hadolint",
+  "telemetry.telemetryLevel": "off"
 }
