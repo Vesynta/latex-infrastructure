@@ -16,7 +16,7 @@ jobs:
     if: github.event.pull_request.draft != true
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run CI Tests via Docker
         run: make ci-test
