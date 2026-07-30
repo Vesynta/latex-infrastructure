@@ -1,0 +1,12 @@
+services:
+  devcontainer:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: dev
+      args:
+        TEX_IMAGE_TAG: latest-full
+    volumes:
+      - ..:/workspaces/latex-infrastructure:cached
+    command: sleep infinity
+    init: true
