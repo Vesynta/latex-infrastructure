@@ -115,6 +115,9 @@ RUN luaotfload-tool -u -v && fc-cache -fv
 FROM prod AS test
 USER root
 COPY --from=hadolint/hadolint:latest /bin/hadolint /usr/local/bin/hadolint
+COPY .hadolint.yaml /opt/test/.hadolint.yaml
+COPY .chktexrc /opt/test/.chktexrc
+COPY Dockerfile /opt/test/Dockerfile
 COPY test/ /opt/test/
 RUN chmod +x /opt/test/run-tests.sh
 USER vscode

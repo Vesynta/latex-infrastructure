@@ -3,7 +3,7 @@
 % Exercised by both pdflatex and lualatex. fontspec only loads under the
 % unicode engines, so guard it; pdflatex falls back to the default fonts.
 \usepackage{iftex}
-\ifLuaTeX
+\ifLuaTeX%
   \usepackage{fontspec}
 \fi
 \usepackage{amsmath}

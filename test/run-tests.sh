@@ -19,7 +19,13 @@ cd "$WORKDIR"
 step() { printf '\n=== %s ===\n' "$1"; }
 
 step "hadolint: lint the Dockerfile"
-hadolint --config "$WORK/.hadolint.yaml" "$WORK/Dockerfile"
+HADOLINT_CONFIG="$WORK/.hadolint.yaml"
+HADOLINT_DOCKERFILE="$WORK/Dockerfile"
+if [[ ! -f "$HADOLINT_CONFIG" || ! -f "$HADOLINT_DOCKERFILE" ]]; then
+	HADOLINT_CONFIG="/opt/test/.hadolint.yaml"
+	HADOLINT_DOCKERFILE="/opt/test/Dockerfile"
+fi
+hadolint --config "$HADOLINT_CONFIG" "$HADOLINT_DOCKERFILE"
 
 step "tooling versions"
 tlmgr --version
@@ -35,7 +41,11 @@ step "lualatex compile (latexmk -lualatex, exercises fontspec/font cache)"
 latexmk -lualatex -interaction=nonstopmode -halt-on-error sample.tex
 
 step "chktex linter"
-chktex sample.tex
+CHKTEX_CONFIG="$WORK/.chktexrc"
+if [[ ! -f "$CHKTEX_CONFIG" ]]; then
+	CHKTEX_CONFIG="/opt/test/.chktexrc"
+fi
+chktex -l "$CHKTEX_CONFIG" sample.tex
 
 step "latexindent (exercises the Perl deps)"
 latexindent sample.tex >/dev/null
