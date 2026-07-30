@@ -4,7 +4,7 @@ TAG ?= local
 TEX_IMAGE_TAG ?= latest-full
 PROGRESS ?= auto
 
-.PHONY: build build-prod build-local build-dev ci-test lint format-docs check-docs pre-commit install-hooks clean help
+.PHONY: build build-prod build-local build-dev ci-test lint lint-tex format-docs check-docs pre-commit install-hooks clean help
 
 ## build: alias for build-prod
 build: build-prod
@@ -26,7 +26,15 @@ ci-test:
 
 ## lint: run hadolint against the Dockerfile
 lint:
-	docker run --rm -v "$(CURDIR):/work:ro" -w /work hadolint/hadolint hadolint --config .hadolint.yaml Dockerfile
+	@if command -v hadolint >/dev/null 2>&1; then \
+		hadolint --config .hadolint.yaml Dockerfile; \
+	else \
+		docker run --rm -v "$(CURDIR):/work:ro" -w /work hadolint/hadolint hadolint --config .hadolint.yaml Dockerfile; \
+	fi
+
+## lint-tex: run chktex against smoke-test fixtures with repo config
+lint-tex:
+	chktex -l .chktexrc test/sample.tex
 
 ## format-docs: format markdown with mdformat
 format-docs:
