@@ -1,0 +1,13 @@
+# Ignore generated LaTeX outputs from local smoke-test runs.
+test/*.aux
+test/*.bbl
+test/*.bcf
+test/*.blg
+test/*.fdb_latexmk
+test/*.fls
+test/*.log
+test/*.out
+test/*.pdf
+test/*.run.xml
+test/*.synctex.gz
+test/_minted*/
