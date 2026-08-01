@@ -109,7 +109,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
 # devcontainers mounting a named volume at ~/.config/gh inherit writable
 # ownership (Docker initialises empty volumes from the image path's uid/gid).
 RUN mkdir -p /home/vscode/.config/gh \
-  && chown vscode:vscode /home/vscode/.config/gh
+  && chown -R vscode:vscode /home/vscode/.config
 
 # ---------------------------------------------------------------------------
 # prod: the published GHCR image. Just base plus pre-built font caches so the
