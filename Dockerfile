@@ -61,6 +61,8 @@ ENV INFOPATH="/usr/local/texlive/current/texmf-dist/doc/info:"
 #   - cpanminus + lib*-perl: runtime deps for latexindent
 #   - pandoc: native Word (docx) and other-format export
 #   - nodejs/npm: Node-based devcontainer features (e.g. Claude Code)
+#   - gh: GitHub CLI for PR review workflows in consumer repos
+#   - librsvg2-bin: rsvg-convert for SVG → PDF figure conversion
 # Font packages (registered by fc-cache in the prod stage) give pandoc and
 # the LaTeX engines broad, high-quality coverage:
 #   - fonts-liberation: Arial/Times/Courier metric-compatible (Word classics)
@@ -91,6 +93,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
   pandoc \
   nodejs \
   npm \
+  gh \
+  librsvg2-bin \
   fonts-liberation \
   fonts-crosextra-carlito \
   fonts-crosextra-caladea \
@@ -100,6 +104,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
   lmodern \
   fonts-texgyre \
   fonts-freefont-ttf
+
+# Pre-create the gh config directory owned by vscode so that consumer
+# devcontainers mounting a named volume at ~/.config/gh inherit writable
+# ownership (Docker initialises empty volumes from the image path's uid/gid).
+RUN mkdir -p /home/vscode/.config/gh \
+  && chown -R vscode:vscode /home/vscode/.config
 
 # ---------------------------------------------------------------------------
 # prod: the published GHCR image. Just base plus pre-built font caches so the
@@ -137,7 +147,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
   --mount=type=cache,target=/root/.cache/pip,sharing=shared,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
   && apt-get update \
-  && apt-get install -y --no-install-recommends python3-venv gh \
+  && apt-get install -y --no-install-recommends python3-venv \
   && python3 -m venv /opt/docs-tools \
   && /opt/docs-tools/bin/pip install \
   mdformat \
