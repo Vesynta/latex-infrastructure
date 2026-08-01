@@ -33,6 +33,8 @@ pdflatex --version
 pandoc --version
 node --version
 npm --version
+gh --version
+rsvg-convert --version
 
 step "pdflatex compile (latexmk -pdf)"
 latexmk -pdf -interaction=nonstopmode -halt-on-error sample.tex

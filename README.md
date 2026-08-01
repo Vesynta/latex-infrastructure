@@ -23,12 +23,15 @@ ghcr.io/vesynta/latex-infrastructure
 - Pre-built font caches (`luaotfload-tool` and `fontconfig`) so the first
   compilation isn't slowed down by cache generation.
 - Common tooling: `make`, `perl`, `python3`, `python3-pygments` (for `minted`),
-  `chktex`, `ghostscript`, `git-lfs`, `nodejs`, `npm`, and the Perl modules
+  `chktex`, `ghostscript`, `git-lfs`, `nodejs`, `npm`, `gh` (GitHub CLI),
+  `librsvg2-bin` (`rsvg-convert` for SVG → PDF), and the Perl modules
   required by `latexindent`. Node is included so Node-based devcontainer
   features such as Claude Code work out of the box.
 - `pandoc` plus a broad, high-quality font set (Liberation, Carlito/Caladea,
   DejaVu, Noto, TeX Gyre, Latin Modern, FreeFont) so native Word (`docx`)
   export and other conversions render with proper fonts.
+- A pre-created, `vscode`-owned `~/.config/gh` directory so consumer
+  devcontainers that mount a named volume there inherit writable ownership.
 
 ## Image architecture
 
@@ -36,8 +39,8 @@ The [Dockerfile](Dockerfile) is multi-stage. Consumers only ever pull `prod`;
 the `test` and `dev` stages exist for CI and maintainers and are never
 published:
 
-- `base` - the shared foundation: TeX Live, system dependencies, `pandoc`, and
-  fonts.
+- `base` - the shared foundation: TeX Live, system dependencies (`gh`,
+  `librsvg2-bin`, …), `pandoc`, and fonts.
 - `prod` - `base` plus pre-built font caches. This is the image published to
   GHCR.
 - `test` - `prod` plus the `hadolint` binary and the test fixtures; its default
