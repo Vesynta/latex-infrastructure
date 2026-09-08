@@ -39,11 +39,11 @@ lint-tex:
 
 ## format-docs: format markdown with mdformat
 format-docs:
-	mdformat .
+	mdformat $$(find . -name '*.md' ! -path './.git/*' ! -path './.agents/mcp/*')
 
 ## check-docs: check markdown formatting without writing
 check-docs: mcp-check-config
-	mdformat --check .
+	mdformat --check $$(find . -name '*.md' ! -path './.git/*' ! -path './.agents/mcp/*')
 
 ## setup: install git hooks and sync MCP configs
 setup: install-hooks mcp-sync
