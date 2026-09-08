@@ -6,7 +6,16 @@ services:
       target: dev
       args:
         TEX_IMAGE_TAG: latest-full
+    env_file:
+      - path: ../.env.example
+        required: true
+      - path: ../.env
+        required: false
+    environment:
+      DOCKER_INIT_USERNAME: vscode
     volumes:
       - ..:/workspaces/latex-infrastructure:cached
-    command: sleep infinity
+      - /var/run/docker.sock:/var/run/docker-host.sock
+    entrypoint: ['/usr/local/share/docker-init.sh']
+    command: ['sleep', 'infinity']
     init: true

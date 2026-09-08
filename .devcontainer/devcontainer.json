@@ -3,17 +3,20 @@
   "dockerComposeFile": "docker-compose.yaml",
   "service": "devcontainer",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  // Install the git pre-commit hook and pre-warm the hook environments so the
-  // first commit isn't slow. Commits are expected to happen inside the
-  // container (the generated hook references the container's pre-commit).
-  "postCreateCommand": "make install-hooks && pre-commit install-hooks",
-  "features": {
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
-      "moby": false,
-      "installDockerBuildx": true,
-      "installDockerCompose": true
+  // Install the git pre-commit hook, pre-warm hook environments, and sync
+  // MCP IDE configs. Commits are expected to happen inside the container
+  // (the generated hook references the container's pre-commit).
+  "postCreateCommand": "make setup && pre-commit install-hooks",
+  "forwardPorts": [8787, 33418],
+  "portsAttributes": {
+    "8787": {
+      "label": "Cursor MCP OAuth callback",
+      "onAutoForward": "notify"
     },
-    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+    "33418": {
+      "label": "VS Code MCP OAuth callback",
+      "onAutoForward": "notify"
+    }
   },
   "mounts": [
     "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",

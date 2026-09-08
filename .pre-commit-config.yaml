@@ -26,4 +26,13 @@ repos:
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.10.0.1
     hooks:
-      - id: shellcheck                  # lints test/run-tests.sh
+      - id: shellcheck                  # lints test/run-tests.sh and mcp scripts
+        exclude: '^\.devcontainer/zsh/'
+  - repo: local
+    hooks:
+      - id: mcp-check-config
+        name: mcp-check-config
+        language: system
+        entry: env MCP_CHECK_OFFLINE=1 bash .agents/mcp/check-mcp-configs.sh
+        pass_filenames: false
+        always_run: true

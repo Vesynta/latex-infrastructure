@@ -8,6 +8,12 @@ ARG TEX_IMAGE_TAG=latest-full
 # TeX Live installation out of the official image.
 FROM texlive/texlive:${TEX_IMAGE_TAG} AS texlive-source
 
+# Vendor images for the maintainer `dev` stage only (Dependabot reads FROM).
+# Unused when building `--target prod` / `--target test`.
+FROM docker:29.7.2-cli AS dockercli
+FROM jdxcode/mise:2026.9.2 AS mise
+FROM ohmyzsh/ohmyzsh:master-zsh5.9.2 AS omz
+
 # ---------------------------------------------------------------------------
 # base: shared TeX Live tree + system deps + pandoc + a quality font set.
 # ---------------------------------------------------------------------------
@@ -134,12 +140,23 @@ USER vscode
 CMD ["/opt/test/run-tests.sh"]
 
 # ---------------------------------------------------------------------------
-# dev: test + maintainer doc tooling (mdformat, pre-commit). Inherits the
-# hadolint binary from the test stage, so the editor extension finds it on
-# PATH. CMD is reset so the inherited test command doesn't run.
+# dev: test + maintainer doc tooling (mdformat, pre-commit), baked Docker CLI,
+# mise Node 22 (MCP / Claude Code), and zsh overlay. Inherits the hadolint
+# binary from the test stage. CMD is reset so the inherited test command
+# doesn't run. Do not fold this into prod — publications consumes GHCR prod.
 # ---------------------------------------------------------------------------
 FROM test AS dev
 USER root
+
+ENV MISE_DATA_DIR=/mise \
+  MISE_CONFIG_DIR=/mise \
+  MISE_CACHE_DIR=/mise/cache \
+  MISE_YES=1 \
+  PATH="/mise/shims:${PATH}"
+# Unix account for docker-init.sh (not a credential).
+# hadolint ignore=DL3064
+ENV DOCKER_INIT_USERNAME=vscode
+
 # apt + pip cache mounts; the keep-cache config from base is inherited. pip's
 # --no-cache-dir is dropped so the cache mount is actually used.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
@@ -147,7 +164,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
   --mount=type=cache,target=/root/.cache/pip,sharing=shared,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
   && apt-get update \
-  && apt-get install -y --no-install-recommends python3-venv \
+  && apt-get install -y --no-install-recommends \
+  python3-venv \
+  socat \
   && python3 -m venv /opt/docs-tools \
   && /opt/docs-tools/bin/pip install \
   mdformat \
@@ -156,5 +175,45 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
   pre-commit \
   && ln -s /opt/docs-tools/bin/mdformat /usr/local/bin/mdformat \
   && ln -s /opt/docs-tools/bin/pre-commit /usr/local/bin/pre-commit
+
+# Passwordless sudo + docker group for baked DooD (not a Dev Container feature).
+RUN echo 'vscode ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/vscode \
+  && chmod 0440 /etc/sudoers.d/vscode \
+  && groupadd --system docker \
+  && usermod -aG docker vscode
+
+COPY --from=mise /usr/local/bin/mise /usr/local/bin/mise
+RUN --mount=type=cache,target=/mise/cache,sharing=locked \
+  mise use -g node@22 \
+  && mise reshim \
+  && chmod -R a+rX /mise
+
+# Docker CLI + compose/buildx from a pinned image (not a Dev Container feature).
+COPY --from=dockercli /usr/local/bin/docker /usr/local/bin/docker
+COPY --from=dockercli /usr/local/libexec/docker/cli-plugins /usr/local/libexec/docker/cli-plugins
+COPY --chown=root:root --chmod=0755 \
+  .devcontainer/docker-init.sh \
+  /usr/local/share/docker-init.sh
+RUN ln -sfn /var/run/docker-host.sock /var/run/docker.sock
+
+# Claude Code via mise Node (not the Anthropic Dev Container feature).
+RUN --mount=type=cache,target=/mise/cache,sharing=locked \
+  mise exec -- npm install -g "@anthropic-ai/claude-code@2.1.247" \
+  && mise reshim \
+  && chmod -R a+rX /mise \
+  && claude --version
+
+COPY --from=omz --chown=vscode:vscode /root/.oh-my-zsh /home/vscode/.oh-my-zsh
+COPY --chown=vscode:vscode .devcontainer/zsh/.zshrc /home/vscode/.zshrc
+RUN git clone --depth=1 --branch v0.7.1 \
+  https://github.com/zsh-users/zsh-autosuggestions.git \
+  /home/vscode/.oh-my-zsh/custom/plugins/zsh-autosuggestions \
+  && git clone --depth=1 --branch 0.8.0 \
+  https://github.com/zsh-users/zsh-syntax-highlighting.git \
+  /home/vscode/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting \
+  && rm -rf /home/vscode/.oh-my-zsh/custom/plugins/zsh-autosuggestions/.git \
+  /home/vscode/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/.git \
+  && chown -R vscode:vscode /home/vscode/.oh-my-zsh /home/vscode/.zshrc
+
 USER vscode
 CMD ["sleep", "infinity"]
