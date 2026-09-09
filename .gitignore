@@ -15,3 +15,8 @@ test/_minted*/
 # Local DevContainer overrides (.env.example is the tracked SoT)
 .env
 .env.local
+
+# Nested sibling clones under .agents/context/ may leak package-manager
+# caches onto this DevContainer bind-mount (workspace root).
+.pnpm-store/
+node_modules/
