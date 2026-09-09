@@ -1,0 +1,4 @@
+# Keep Claude Code settings/credentials out of git; track only the skills symlink.
+*
+!skills
+!.gitignore
