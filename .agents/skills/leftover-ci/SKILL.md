@@ -6,4 +6,4 @@ ______________________________________________________________________
 
 The local aggregate is `make lint`, `make check-docs`, and `make pre-commit`. There is **no** `make check` target.
 
-If the files you changed live under `.agents/context/`, load [`nested-context-work`](../nested-context-work/SKILL.md) first.
+If the files you changed live under `.agents/context/`, load [`nested-context-work`](../nested-context-work/SKILL.md) first. Disk quota: that skill’s safe prune (never volumes).
