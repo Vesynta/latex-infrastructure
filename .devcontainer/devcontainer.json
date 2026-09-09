@@ -5,6 +5,7 @@
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   // Install the git pre-commit hook. Commits are expected to happen inside
   // the container (the generated hook references the container's pre-commit).
+  // pre-commit install-hooks pre-warms hook environments so the first commit is not slow.
   "postCreateCommand": "make setup && pre-commit install-hooks",
   "mounts": [
     "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
