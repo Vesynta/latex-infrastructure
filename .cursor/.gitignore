@@ -1,4 +1,3 @@
-# Cursor local state. Track only the MCP symlink.
+# Cursor local state.
 *
-!mcp.json
 !.gitignore

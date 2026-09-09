@@ -3,21 +3,9 @@
   "dockerComposeFile": "docker-compose.yaml",
   "service": "devcontainer",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  // Install the git pre-commit hook, pre-warm hook environments, and sync
-  // MCP IDE configs. Commits are expected to happen inside the container
-  // (the generated hook references the container's pre-commit).
+  // Install the git pre-commit hook. Commits are expected to happen inside
+  // the container (the generated hook references the container's pre-commit).
   "postCreateCommand": "make setup && pre-commit install-hooks",
-  "forwardPorts": [8787, 33418],
-  "portsAttributes": {
-    "8787": {
-      "label": "Cursor MCP OAuth callback",
-      "onAutoForward": "notify"
-    },
-    "33418": {
-      "label": "VS Code MCP OAuth callback",
-      "onAutoForward": "notify"
-    }
-  },
   "mounts": [
     "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
     "source=gh-config-${devcontainerId},target=/home/vscode/.config/gh,type=volume"

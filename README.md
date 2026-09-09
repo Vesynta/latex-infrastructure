@@ -24,7 +24,7 @@ The [Dockerfile](Dockerfile) is multi-stage. Consumers only ever pull `prod`; th
 - `base` - the shared foundation: TeX Live, system dependencies (`gh`, `librsvg2-bin`, …), `pandoc`, and fonts.
 - `prod` - `base` plus pre-built font caches. This is the image published to GHCR.
 - `test` - `prod` plus the `hadolint` binary and the test fixtures; its default command runs the smoke-test suite (used by `make ci-test`).
-- `dev` - `test` plus maintainer doc tooling (`mdformat`, `pre-commit`), baked Docker CLI (`docker-init` DooD), mise Node 22 (Claude Code / MCP `npx`), and the team zsh overlay. Not published; `prod` remains the GHCR artefact.
+- `dev` - `test` plus maintainer doc tooling (`mdformat`, `pre-commit`), baked Docker CLI (`docker-init` DooD), mise Node 22 (Claude Code), and the team zsh overlay. Not published; `prod` remains the GHCR artefact.
 
 ```mermaid
 flowchart LR
@@ -97,7 +97,7 @@ The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the i
 
 ## Local maintenance
 
-This repository ships its own [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json), which builds the `dev` stage via [`.devcontainer/docker-compose.yaml`](.devcontainer/docker-compose.yaml), so maintainers can open the repo in a Dev Container and test image changes before publishing. Compose mounts the host Docker socket and runs `docker-init`; there are no Dev Container `features`. Workspace MCP is [`.agents/mcp.json`](.agents/mcp.json) — [`.agents/mcp/README.md`](.agents/mcp/README.md).
+This repository ships its own [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json), which builds the `dev` stage via [`.devcontainer/docker-compose.yaml`](.devcontainer/docker-compose.yaml), so maintainers can open the repo in a Dev Container and test image changes before publishing. Compose mounts the host Docker socket and runs `docker-init`; there are no Dev Container `features`. This public image does not ship team MCP client configs.
 
 Common tasks are wrapped in the [Makefile](Makefile):
 
@@ -108,7 +108,7 @@ make build-dev   # build the devcontainer (dev stage) image
 make ci-test     # run hadolint + the LaTeX smoke test suite in Docker
 make lint        # run hadolint against the Dockerfile
 make format-docs # format markdown with mdformat
-make setup       # install git hooks and sync MCP IDE configs
+make setup       # install git hooks
 make pre-commit  # run all pre-commit hooks
 ```
 
