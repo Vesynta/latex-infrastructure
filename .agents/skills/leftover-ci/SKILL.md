@@ -1,6 +1,6 @@
 ______________________________________________________________________
 
-## name: leftover-ci description: >- Binds agents to latex-infrastructure leftover-ci. Runs make lint, make check-docs, and make pre-commit. Do not invent make check. Public repo; no company MCP portal URLs in skills.
+## name: leftover-ci description: Binds agents to latex-infrastructure leftover-ci. Runs make lint, make check-docs, and make pre-commit. Do not invent make check. Public repo; do not add company MCP client configs to skills.
 
 # Leftover-CI
 
