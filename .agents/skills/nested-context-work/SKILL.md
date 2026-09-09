@@ -38,6 +38,8 @@ The clone’s hooks expect **that** image (pnpm, uv, Django, LaTeX, …). This h
 
 Leftover-ci, `git commit`, and `git push` are a **one-shot** `compose run --rm --no-deps` (or `docker run --rm` of that `dev` image). Do **not** `compose up -d` a second app replica. Do **not** run the clone’s `initializeCommand` (clinical-frontend’s stops local-stack `frontend`/`render` on `clinical-net`).
 
+Clone PRs use **that** clone’s `.github/PULL_REQUEST_TEMPLATE.md` when present (fill it; do not use Summary / Test plan). Incremental conventional commits: that clone’s [`engineering-discipline`](../engineering-discipline/SKILL.md). `gh pr edit` of a description may run from this host; commits and leftover-ci still belong in the clone image.
+
 ### DooD host-path bind
 
 When **this host is itself a DevContainer**, compose bind mounts such as `.:/app` are resolved by the **daemon on the laptop**, not by this container. `./` inside `/app/.agents/context/<clone>` does not exist on the host, so the nested service starts with an empty workdir.
@@ -136,6 +138,7 @@ Never `docker volume prune`, `docker system prune --volumes`, or `docker compose
 - `git commit` / `git push` in a nested clone from this container’s own shell.
 - Host leftover-ci as the done gate for product-repo edits.
 - `git commit --no-verify` because the host lacks `pnpm`.
+- Opening a clone PR with Summary / Test plan instead of that clone’s `.github/PULL_REQUEST_TEMPLATE.md`.
 - Copying host skills into `.cursor/skills` or duplicating them under the clone’s `.claude/skills` (that path must be a **symlink** to `.agents/skills`).
 - Adding `.agents/context/` clones as git submodules.
 - Joining `clinical-net` / `community-net` for leftover-ci or publishing plane ports on `nested-ctx-*`.
