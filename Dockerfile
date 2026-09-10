@@ -115,7 +115,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
 # devcontainers mounting a named volume at ~/.config/gh inherit writable
 # ownership (Docker initialises empty volumes from the image path's uid/gid).
 RUN mkdir -p /home/vscode/.config/gh \
-  && chown -R vscode:vscode /home/vscode/.config
+  && chown -R vscode:vscode /home/vscode/.config \
+  && git config --system credential.helper '!gh auth git-credential'
 
 # ---------------------------------------------------------------------------
 # prod: the published GHCR image. Just base plus pre-built font caches so the
@@ -216,4 +217,5 @@ RUN git clone --depth=1 --branch v0.7.1 \
   && chown -R vscode:vscode /home/vscode/.oh-my-zsh /home/vscode/.zshrc
 
 USER vscode
+RUN gh extension install github/gh-stack
 CMD ["sleep", "infinity"]

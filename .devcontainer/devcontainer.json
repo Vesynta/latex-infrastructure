@@ -6,7 +6,8 @@
   // Install the git pre-commit hook. Commits are expected to happen inside
   // the container (the generated hook references the container's pre-commit).
   // pre-commit install-hooks pre-warms hook environments so the first commit is not slow.
-  "postCreateCommand": "make setup && pre-commit install-hooks",
+  "postCreateCommand": "bash .devcontainer/setup-git-https.sh && make setup && pre-commit install-hooks",
+  "postStartCommand": "bash .devcontainer/setup-git-https.sh",
   "mounts": [
     "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
     "source=gh-config-${devcontainerId},target=/home/vscode/.config/gh,type=volume"
@@ -38,5 +39,8 @@
       }
     }
   },
-  "remoteUser": "vscode"
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "GIT_TERMINAL_PROMPT": "0"
+  },
 }
