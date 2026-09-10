@@ -217,5 +217,8 @@ RUN git clone --depth=1 --branch v0.7.1 \
   && chown -R vscode:vscode /home/vscode/.oh-my-zsh /home/vscode/.zshrc
 
 USER vscode
-RUN gh extension install github/gh-stack
+# Public clone: `gh extension install` requires an authenticated gh at build (CI has none).
+RUN mkdir -p /home/vscode/.local/share/gh/extensions \
+  && git clone --depth=1 https://github.com/github/gh-stack.git \
+    /home/vscode/.local/share/gh/extensions/gh-stack
 CMD ["sleep", "infinity"]
