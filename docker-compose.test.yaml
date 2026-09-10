@@ -1,3 +1,6 @@
+# name: isolates this project from the DevContainer compose stack.
+name: latex-infrastructure-ci
+
 services:
   ci-test:
     build:

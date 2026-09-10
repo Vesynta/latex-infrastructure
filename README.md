@@ -93,15 +93,15 @@ A few things to keep in mind:
 
 ## Publishing
 
-The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the image and pushes it to GHCR on every push to `main` and `dev`, and on manual `workflow_dispatch`. It uses GitHub Actions cache (`type=gha`) to speed up subsequent builds. Tags are derived automatically by [`docker/metadata-action`](https://github.com/docker/metadata-action).
+The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the image and pushes it to GHCR on every push to `main` and `dev`, and on manual `workflow_dispatch`. It uses GitHub Actions cache (`type=gha`) plus cache-dance for apt mounts on ephemeral `ubuntu-latest` runners. Cache-mount IDs (`vesynta-*`) are shared with other Vesynta builders: [infrastructure `docs/docker-build-cache.md`](https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md). Tags are derived automatically by [`docker/metadata-action`](https://github.com/docker/metadata-action).
 
 ## Getting started (maintainers)
 
 > **Prerequisites:** Docker, Git, and VS Code or Cursor with the Dev Containers extension.
 
 1. Clone this repository and Command Palette → **Dev Containers: Reopen in Container**. Compose builds the `dev` stage via [`.devcontainer/docker-compose.yaml`](.devcontainer/docker-compose.yaml).
-1. Compose mounts the host Docker socket and runs `docker-init`; there are **no** Dev Container `features`. This public image does not ship team MCP client configs.
-1. `postCreateCommand` runs `make setup` and pre-warms pre-commit environments.
+2. Compose mounts the host Docker socket and runs `docker-init`; there are **no** Dev Container `features`. This public image does not ship team MCP client configs.
+3. `postCreateCommand` runs `make setup` and pre-warms pre-commit environments.
 
 Consumers should pull `prod` from GHCR (see above) rather than developing against this maintainer container.
 

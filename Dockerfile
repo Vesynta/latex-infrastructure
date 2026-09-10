@@ -16,6 +16,8 @@ FROM ohmyzsh/ohmyzsh:master-zsh5.9.2 AS omz
 
 # ---------------------------------------------------------------------------
 # base: shared TeX Live tree + system deps + pandoc + a quality font set.
+# Microsoft's unversioned `ubuntu` tag is the current LTS (24.04 noble).
+# Cache-mount IDs: https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md
 # ---------------------------------------------------------------------------
 FROM mcr.microsoft.com/devcontainers/base:ubuntu AS base
 
@@ -79,8 +81,9 @@ ENV INFOPATH="/usr/local/texlive/current/texmf-dist/doc/info:"
 # Cache mounts let repeat builds reuse the downloaded .debs and apt lists. They
 # are excluded from the committed layer, so the image stays lean without an
 # explicit apt clean (which is why the old clean/rm tail is gone).
-RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
-  --mount=type=cache,target=/var/lib/apt,sharing=shared,uid=0,gid=0 \
+# sharing=locked: apt is not safe for concurrent writers on a shared ID.
+RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=vesynta-apt-lists-ubuntu-noble,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
   && apt-get update \
   && apt-get install -y --no-install-recommends \
@@ -160,9 +163,9 @@ ENV DOCKER_INIT_USERNAME=vscode
 
 # apt + pip cache mounts; the keep-cache config from base is inherited. pip's
 # --no-cache-dir is dropped so the cache mount is actually used.
-RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
-  --mount=type=cache,target=/var/lib/apt,sharing=shared,uid=0,gid=0 \
-  --mount=type=cache,target=/root/.cache/pip,sharing=shared,uid=0,gid=0 \
+RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=vesynta-apt-lists-ubuntu-noble,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=vesynta-pip,target=/root/.cache/pip,sharing=locked,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
   && apt-get update \
   && apt-get install -y --no-install-recommends \
@@ -184,7 +187,7 @@ RUN echo 'vscode ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/vscode \
   && usermod -aG docker vscode
 
 COPY --from=mise /usr/local/bin/mise /usr/local/bin/mise
-RUN --mount=type=cache,target=/mise/cache,sharing=locked \
+RUN --mount=type=cache,id=vesynta-mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
   mise use -g node@22 \
   && mise reshim \
   && chmod -R a+rX /mise
@@ -198,7 +201,7 @@ COPY --chown=root:root --chmod=0755 \
 RUN ln -sfn /var/run/docker-host.sock /var/run/docker.sock
 
 # Claude Code via mise Node (not the Anthropic Dev Container feature).
-RUN --mount=type=cache,target=/mise/cache,sharing=locked \
+RUN --mount=type=cache,id=vesynta-mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
   mise exec -- npm install -g "@anthropic-ai/claude-code@2.1.247" \
   && mise reshim \
   && chmod -R a+rX /mise \
