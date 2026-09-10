@@ -100,8 +100,8 @@ The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the i
 > **Prerequisites:** Docker, Git, and VS Code or Cursor with the Dev Containers extension.
 
 1. Clone this repository and Command Palette → **Dev Containers: Reopen in Container**. Compose builds the `dev` stage via [`.devcontainer/docker-compose.yaml`](.devcontainer/docker-compose.yaml).
-2. Compose mounts the host Docker socket and runs `docker-init`; there are **no** Dev Container `features`. This public image does not ship team MCP client configs.
-3. `postCreateCommand` runs `make setup` and pre-warms pre-commit environments.
+1. Compose mounts the host Docker socket and runs `docker-init`; there are **no** Dev Container `features`. This public image does not ship team MCP client configs.
+1. `postCreateCommand` runs `make setup` and pre-warms pre-commit environments.
 
 Consumers should pull `prod` from GHCR (see above) rather than developing against this maintainer container.
 
