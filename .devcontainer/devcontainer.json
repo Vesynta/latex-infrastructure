@@ -27,15 +27,15 @@
         "ms-vscode.makefile-tools",
         // --- Collaboration & Utilities ---
         "GitHub.vscode-pull-request-github",
-        "ms-vsliveshare.vsliveshare",
+        "eamodio.gitlens",
         "streetsidesoftware.code-spell-checker",
         "streetsidesoftware.code-spell-checker-cspell-bundled-dictionaries",
-        "mproberts.vscode-pre-commit", // Pre-commit hook visual support
-        "usernamehw.errorlens" // Highlights errors/warnings inline in the editor
-      ]
-    },
-    "settings": {
-      "extensions.ignoreRecommendations": true
+        "mproberts.vscode-pre-commit",
+        "usernamehw.errorlens"
+      ],
+      "settings": {
+        "mdformat.pythonPath": "/opt/docs-tools/bin/python"
+      }
     }
   },
   "remoteUser": "vscode"

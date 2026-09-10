@@ -9,6 +9,11 @@
         "TakumiI.markdowntable",
         "ms-python.python",
         "editorconfig.editorconfig",
-        "exiasr.hadolint"
+        "exiasr.hadolint",
+        "eamodio.gitlens",
+        "streetsidesoftware.code-spell-checker",
+        "James-Yu.latex-workshop",
+        "GitHub.vscode-pull-request-github",
+        "usernamehw.errorlens"
     ]
 }
