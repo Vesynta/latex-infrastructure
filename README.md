@@ -13,7 +13,7 @@ ghcr.io/vesynta/latex-infrastructure
 - A complete TeX Live tree (`pdflatex`, `lualatex`, `xelatex`, `latexmk`, `tlmgr`, etc.) on `PATH`, `MANPATH`, and `INFOPATH` for the non-root `vscode` user.
 - `tlmgr` usable without `sudo` (the TeX Live tree is owned by `vscode`).
 - Pre-built font caches (`luaotfload-tool` and `fontconfig`) so the first compilation isn't slowed down by cache generation.
-- Common tooling: `make`, `perl`, `python3`, `python3-pygments` (for `minted`), `chktex`, `ghostscript`, `git-lfs`, `nodejs`, `npm`, `gh` (GitHub CLI), `librsvg2-bin` (`rsvg-convert` for SVG → PDF), and the Perl modules required by `latexindent`. Node is included so Node-based devcontainer features such as Claude Code work out of the box.
+- Common tooling: `make`, `perl`, `python3`, `python3-pygments` (for `minted`), `chktex`, `ghostscript`, `git-lfs`, `nodejs`, `npm`, `gh` (GitHub CLI), `librsvg2-bin` (`rsvg-convert` for SVG → PDF), and the Perl modules required by `latexindent`. Node is on `prod` so consumers can add Node-based tooling; Claude Code is baked into the unpublished `dev` maintainer stage (not a Dev Container `feature`).
 - `pandoc` plus a broad, high-quality font set (Liberation, Carlito/Caladea, DejaVu, Noto, TeX Gyre, Latin Modern, FreeFont) so native Word (`docx`) export and other conversions render with proper fonts.
 - A pre-created, `vscode`-owned `~/.config/gh` directory so consumer devcontainers that mount a named volume there inherit writable ownership.
 
@@ -24,7 +24,7 @@ The [Dockerfile](Dockerfile) is multi-stage. Consumers only ever pull `prod`; th
 - `base` - the shared foundation: TeX Live, system dependencies (`gh`, `librsvg2-bin`, …), `pandoc`, and fonts.
 - `prod` - `base` plus pre-built font caches. This is the image published to GHCR.
 - `test` - `prod` plus the `hadolint` binary and the test fixtures; its default command runs the smoke-test suite (used by `make ci-test`).
-- `dev` - `test` plus maintainer doc tooling (`mdformat`, `pre-commit`), baked Docker CLI (`docker-init` DooD), mise Node 22 (Claude Code), and the team zsh overlay. Not published; `prod` remains the GHCR artefact.
+- `dev` - `test` plus maintainer doc tooling (`mdformat`, `pre-commit`), baked Docker CLI (`docker-init` DooD), mise Node 22 (Claude Code), and the zsh overlay. Not published; `prod` remains the GHCR artefact.
 
 ```mermaid
 flowchart LR
@@ -94,6 +94,16 @@ A few things to keep in mind:
 ## Publishing
 
 The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the image and pushes it to GHCR on every push to `main` and `dev`, and on manual `workflow_dispatch`. It uses GitHub Actions cache (`type=gha`) to speed up subsequent builds. Tags are derived automatically by [`docker/metadata-action`](https://github.com/docker/metadata-action).
+
+## Getting started (maintainers)
+
+> **Prerequisites:** Docker, Git, and VS Code or Cursor with the Dev Containers extension.
+
+1. Clone this repository and Command Palette → **Dev Containers: Reopen in Container**. Compose builds the `dev` stage via [`.devcontainer/docker-compose.yaml`](.devcontainer/docker-compose.yaml).
+2. Compose mounts the host Docker socket and runs `docker-init`; there are **no** Dev Container `features`. This public image does not ship team MCP client configs.
+3. `postCreateCommand` runs `make setup` and pre-warms pre-commit environments.
+
+Consumers should pull `prod` from GHCR (see above) rather than developing against this maintainer container.
 
 ## Local maintenance
 
