@@ -22,8 +22,8 @@ ______________________________________________________________________
 ## Repository Targets
 
 - Pre-commit workflow: `.github/workflows/pre-commit.yml`
-- Test workflow: `.github/workflows/ci-test.yml`
-- Build/push workflow: `.github/workflows/build-and-push.yml`
+- Test workflow: `.github/workflows/ci-test.yml` (Buildx: `prod`, `test`, and `dev` stages, then `docker run` of the `test` image / `test/run-tests.sh`)
+- Build/push workflow: `.github/workflows/build-and-push.yml` (publishes `prod` to GHCR; not used on pull requests)
 - Smoke test script: `test/run-tests.sh`
 - Lint and orchestration targets: `Makefile`
 
