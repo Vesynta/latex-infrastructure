@@ -13,8 +13,8 @@ FROM ${TEXLIVE_IMAGE} AS texlive-source
 
 # Vendor images for the maintainer `dev` stage only (Dependabot reads FROM).
 # Unused when building `--target prod` / `--target test`.
-FROM docker:29.7.2-cli@sha256:3f4743208d2338c934d7b8bcfbe1bb54c0b2355c510ad5e0f31c0c4a54bd704e AS dockercli
-FROM jdxcode/mise:2026.9.2@sha256:812f7860a2fb911e1d5dd3375834abb2a08f8c783a23f783fcbccaf7fc7357aa AS mise
+FROM docker:29.8.0-cli@sha256:eccaacfeed644c7de222ff047483568cb988dde95476fbaaf10ea2d04921bb66 AS dockercli
+FROM jdxcode/mise:2026.9.5@sha256:d549958171c177f113e62ddba5afdfb9e245d699ac457148e4b7b0da7af3b0b7 AS mise
 FROM ohmyzsh/ohmyzsh:master-zsh5.9.2@sha256:d8e42cdf443a8a2c4826dec5efea613866c9dce59d41821148b1ab899b2f2b05 AS omz
 
 # ---------------------------------------------------------------------------
