@@ -1,8 +1,19 @@
 PROJECT := $(notdir $(CURDIR))
 IMAGE ?= latex-infrastructure
 TAG ?= local
-TEX_IMAGE_TAG ?= latest-full
 PROGRESS ?= auto
+
+# Optional TeX Live override. Unset keeps the Dockerfile digest pin.
+#   make build TEX_IMAGE_TAG=latest-medium
+#   make build TEXLIVE_IMAGE=texlive/texlive:latest-medium@sha256:...
+TEX_IMAGE_TAG ?=
+TEXLIVE_IMAGE ?=
+
+ifneq ($(TEXLIVE_IMAGE),)
+BUILD_ARGS += --build-arg TEXLIVE_IMAGE=$(TEXLIVE_IMAGE)
+else ifneq ($(TEX_IMAGE_TAG),)
+BUILD_ARGS += --build-arg TEXLIVE_IMAGE=texlive/texlive:$(TEX_IMAGE_TAG)
+endif
 
 .PHONY: build build-prod build-local build-dev ci-test lint lint-tex format-docs check-docs \
 	setup pre-commit install-hooks clean help
@@ -12,7 +23,7 @@ build: build-prod
 
 ## build-prod: build the published production image
 build-prod:
-	docker build --target prod --build-arg TEX_IMAGE_TAG=$(TEX_IMAGE_TAG) --progress=$(PROGRESS) -t $(IMAGE):$(TAG) .
+	docker build --target prod $(BUILD_ARGS) --progress=$(PROGRESS) -t $(IMAGE):$(TAG) .
 
 ## build-local: build + tag the prod image locally as latex-infrastructure:local
 build-local: build-prod

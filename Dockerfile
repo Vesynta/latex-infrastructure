@@ -1,25 +1,29 @@
 # syntax=docker/dockerfile:1
 
-# Tag of the upstream texlive/texlive image to pull the TeX Live tree from.
-# Overridable at build time (e.g. --build-arg TEX_IMAGE_TAG=latest-medium).
-ARG TEX_IMAGE_TAG=latest-full
+# Overridable TeX Live source. The default is digest-pinned; pass a full
+# image ref to trade size against coverage (e.g. latest-medium). Makefile
+# maps TEX_IMAGE_TAG=latest-medium onto this ARG.
+ARG TEXLIVE_IMAGE=texlive/texlive:latest-full@sha256:66446fb092ef02d6dc31bba079d9bdc83e8a6af00562c6062bb97ae8e91814ea
 
 # Stage 1: a throwaway stage that only exists so we can copy the prebuilt
 # TeX Live installation out of the official image.
-FROM texlive/texlive:${TEX_IMAGE_TAG} AS texlive-source
+# Default is tag@digest; ARG keeps the documented override.
+# hadolint ignore=DL3006
+FROM ${TEXLIVE_IMAGE} AS texlive-source
 
 # Vendor images for the maintainer `dev` stage only (Dependabot reads FROM).
 # Unused when building `--target prod` / `--target test`.
-FROM docker:29.7.2-cli AS dockercli
-FROM jdxcode/mise:2026.9.2 AS mise
-FROM ohmyzsh/ohmyzsh:master-zsh5.9.2 AS omz
+FROM docker:29.7.2-cli@sha256:3f4743208d2338c934d7b8bcfbe1bb54c0b2355c510ad5e0f31c0c4a54bd704e AS dockercli
+FROM jdxcode/mise:2026.9.2@sha256:812f7860a2fb911e1d5dd3375834abb2a08f8c783a23f783fcbccaf7fc7357aa AS mise
+FROM ohmyzsh/ohmyzsh:master-zsh5.9.2@sha256:d8e42cdf443a8a2c4826dec5efea613866c9dce59d41821148b1ab899b2f2b05 AS omz
 
 # ---------------------------------------------------------------------------
 # base: shared TeX Live tree + system deps + pandoc + a quality font set.
-# Microsoft's unversioned `ubuntu` tag is the current LTS (24.04 noble).
+# ubuntu26.04 is Ubuntu 26.04 LTS (resolute); the unversioned `ubuntu` tag
+# tracks the current LTS and is not pinned. Digest keeps the tag from drifting.
 # Cache-mount IDs: https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md
 # ---------------------------------------------------------------------------
-FROM mcr.microsoft.com/devcontainers/base:ubuntu AS base
+FROM mcr.microsoft.com/devcontainers/base:ubuntu26.04@sha256:edfb983aab9c579a385dc23c57d7d3703f5ec920124d99c16204a2cac465aab4 AS base
 
 # The symlink RUN below pipes `ls` into `head`; pipefail makes the build fail
 # fast on a broken pipe and keeps hadolint's DL4006 happy.
@@ -28,9 +32,15 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # The Ubuntu base ships /etc/apt/apt.conf.d/docker-clean, which deletes cached
 # .debs after install and would defeat the BuildKit cache mounts below. Drop it
 # and tell apt to keep downloaded packages so the cache mounts can reuse them.
+# HTTPS + retries: Canonical's default sources use http://, which times out when
+# outbound port 80 is blocked. Fail closed on update so a mirror outage cannot
+# continue into a fake "package has no installation candidate" error.
 # Set once here in base; inherited by every downstream stage.
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
-  && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+  && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
+  && echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/99retries \
+  && find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) \
+    -exec sed -i -E 's#http://(archive|security)\.ubuntu\.com#https://\1.ubuntu.com#g' {} +
 
 # Bring the full TeX Live tree across from the upstream image, chowning it to
 # the vscode user as part of the copy. Doing it here (rather than a separate
@@ -83,9 +93,9 @@ ENV INFOPATH="/usr/local/texlive/current/texmf-dist/doc/info:"
 # explicit apt clean (which is why the old clean/rm tail is gone).
 # sharing=locked: apt is not safe for concurrent writers on a shared ID.
 RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
-  --mount=type=cache,id=vesynta-apt-lists-ubuntu-noble,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=vesynta-apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
-  && apt-get update \
+  && apt-get --error-on=any update \
   && apt-get install -y --no-install-recommends \
   make \
   perl \
@@ -134,7 +144,8 @@ RUN luaotfload-tool -u -v && fc-cache -fv
 # ---------------------------------------------------------------------------
 FROM prod AS test
 USER root
-COPY --from=hadolint/hadolint:latest /bin/hadolint /usr/local/bin/hadolint
+COPY --from=hadolint/hadolint:v2.12.0@sha256:30a8fd2e785ab6176eed53f74769e04f125afb2f74a6c52aef7d463583b6d45e \
+  /bin/hadolint /usr/local/bin/hadolint
 COPY .hadolint.yaml /opt/test/.hadolint.yaml
 COPY .chktexrc /opt/test/.chktexrc
 COPY Dockerfile /opt/test/Dockerfile
@@ -164,10 +175,10 @@ ENV DOCKER_INIT_USERNAME=vscode
 # apt + pip cache mounts; the keep-cache config from base is inherited. pip's
 # --no-cache-dir is dropped so the cache mount is actually used.
 RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
-  --mount=type=cache,id=vesynta-apt-lists-ubuntu-noble,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=vesynta-apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
   --mount=type=cache,id=vesynta-pip,target=/root/.cache/pip,sharing=locked,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
-  && apt-get update \
+  && apt-get --error-on=any update \
   && apt-get install -y --no-install-recommends \
   python3-venv \
   socat \
