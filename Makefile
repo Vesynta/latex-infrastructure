@@ -48,13 +48,13 @@ lint:
 lint-tex:
 	chktex -l .chktexrc test/sample.tex
 
-## format-docs: format markdown with mdformat
+## format-docs: format tracked markdown with mdformat
 format-docs:
-	mdformat .
+	mdformat $(shell git ls-files '*.md')
 
-## check-docs: check markdown formatting without writing
+## check-docs: check tracked markdown formatting without writing
 check-docs:
-	mdformat --check .
+	mdformat --check $(shell git ls-files '*.md')
 
 ## setup: install git hooks
 setup: install-hooks
