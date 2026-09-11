@@ -1,12 +1,14 @@
 # latex-infrastructure
 
-This repository builds and publishes a Docker base image for LaTeX development inside [VS Code Dev Containers](https://containers.dev/). The image layers a full [TeX Live](https://hub.docker.com/r/texlive/texlive) installation on top of Microsoft's [`devcontainers/base:ubuntu`](https://github.com/devcontainers/images/tree/main/src/base-ubuntu) image, so private LaTeX project repositories can pull a ready-to-compile environment from the GitHub Container Registry (GHCR) instead of installing TeX Live themselves.
+This repository builds and publishes a Docker base image for LaTeX development inside [VS Code Dev Containers](https://containers.dev/). The image layers a full [TeX Live](https://hub.docker.com/r/texlive/texlive) installation on top of Microsoft's `[devcontainers/base:ubuntu](https://github.com/devcontainers/images/tree/main/src/base-ubuntu)` image, so private LaTeX project repositories can pull a ready-to-compile environment from the GitHub Container Registry (GHCR) instead of installing TeX Live themselves.
 
 The published image is available at:
 
 ```
 ghcr.io/vesynta/latex-infrastructure
 ```
+
+
 
 ## What's included
 
@@ -16,6 +18,8 @@ ghcr.io/vesynta/latex-infrastructure
 - Common tooling: `make`, `perl`, `python3`, `python3-pygments` (for `minted`), `chktex`, `ghostscript`, `git-lfs`, `nodejs`, `npm`, `gh` (GitHub CLI), `librsvg2-bin` (`rsvg-convert` for SVG → PDF), and the Perl modules required by `latexindent`. Node is on `prod` so consumers can add Node-based tooling; Claude Code is baked into the unpublished `dev` maintainer stage (not a Dev Container `feature`).
 - `pandoc` plus a broad, high-quality font set (Liberation, Carlito/Caladea, DejaVu, Noto, TeX Gyre, Latin Modern, FreeFont) so native Word (`docx`) export and other conversions render with proper fonts.
 - A pre-created, `vscode`-owned `~/.config/gh` directory so consumer devcontainers that mount a named volume there inherit writable ownership.
+
+
 
 ## Image architecture
 
@@ -27,7 +31,7 @@ The [Dockerfile](Dockerfile) is multi-stage. Consumers only ever pull `prod`; th
 - `dev` - `test` plus maintainer doc tooling (`mdformat`, `pre-commit`), baked Docker CLI (`docker-init` DooD), mise Node 22 (Claude Code), and the zsh overlay. Not published; `prod` remains the GHCR artefact.
 
 ```mermaid
-flowchart LR
+flowchart TB
   src["texlive/texlive:TAG"] --> base["base: TeX Live + deps + pandoc + fonts"]
   base --> prod["prod: published image"]
   prod --> test["test: + hadolint + test suite"]
@@ -36,6 +40,10 @@ flowchart LR
   dev -->|"devcontainer"| maint["maintainers"]
   test -->|"make ci-test"| ci["CI"]
 ```
+
+
+
+
 
 ## The `TEX_IMAGE_TAG` build argument
 
@@ -91,15 +99,17 @@ A few things to keep in mind:
 - The image must exist in the same Docker daemon your Dev Container builds against; Docker won't pull `latex-infrastructure:local` from anywhere, so rebuild it whenever you want updates.
 - To trade off size against package coverage (or otherwise customise the build), override `TEX_IMAGE_TAG`, e.g. `make build-local TEX_IMAGE_TAG=latest-medium`.
 
+
+
 ## Publishing
 
-The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the image and pushes it to GHCR on every push to `main` and `dev`, and on manual `workflow_dispatch`. It uses GitHub Actions cache (`type=gha`) plus cache-dance for apt mounts on ephemeral `ubuntu-latest` runners. Cache-mount IDs (`vesynta-*`) are shared with other Vesynta builders: [infrastructure `docs/docker-build-cache.md`](https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md). Tags are derived automatically by [`docker/metadata-action`](https://github.com/docker/metadata-action).
+The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the image and pushes it to GHCR on every push to `main` and `dev`, and on manual `workflow_dispatch`. It uses GitHub Actions cache (`type=gha`) plus cache-dance for apt mounts on ephemeral `ubuntu-latest` runners. Cache-mount IDs (`vesynta-*`) are shared with other Vesynta builders: [infrastructure](https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md) `docs/docker-build-cache.md`. Tags are derived automatically by `[docker/metadata-action](https://github.com/docker/metadata-action)`.
 
 ## Getting started (maintainers)
 
 > **Prerequisites:** Docker, Git, and VS Code or Cursor with the Dev Containers extension.
 
-1. Clone this repository and Command Palette → **Dev Containers: Reopen in Container**. Compose builds the `dev` stage via [`.devcontainer/docker-compose.yaml`](.devcontainer/docker-compose.yaml).
+1. Clone this repository and Command Palette → **Dev Containers: Reopen in Container**. Compose builds the `dev` stage via `[.devcontainer/docker-compose.yaml](.devcontainer/docker-compose.yaml)`.
 2. Compose mounts the host Docker socket and runs `docker-init`; there are **no** Dev Container `features`. This public image does not ship team MCP client configs.
 3. `postCreateCommand` runs `make setup` and pre-warms pre-commit environments.
 
@@ -107,7 +117,7 @@ Consumers should pull `prod` from GHCR (see above) rather than developing agains
 
 ## Local maintenance
 
-This repository ships its own [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json), which builds the `dev` stage via [`.devcontainer/docker-compose.yaml`](.devcontainer/docker-compose.yaml), so maintainers can open the repo in a Dev Container and test image changes before publishing. Compose mounts the host Docker socket and runs `docker-init`; there are no Dev Container `features`. This public image does not ship team MCP client configs.
+This repository ships its own `[.devcontainer/devcontainer.json](.devcontainer/devcontainer.json)`, which builds the `dev` stage via `[.devcontainer/docker-compose.yaml](.devcontainer/docker-compose.yaml)`, so maintainers can open the repo in a Dev Container and test image changes before publishing. Compose mounts the host Docker socket and runs `docker-init`; there are no Dev Container `features`.
 
 Common tasks are wrapped in the [Makefile](Makefile):
 
@@ -122,7 +132,7 @@ make setup       # install git hooks
 make pre-commit  # run all pre-commit hooks
 ```
 
-Tests run inside the `test` image via [`docker-compose.test.yaml`](docker-compose.test.yaml); the same suite runs in CI through the [CI Test workflow](.github/workflows/ci-test.yml). A lighter [pre-commit workflow](.github/workflows/pre-commit.yml) gates formatting and linting.
+Tests run inside the `test` image via `[docker-compose.test.yaml](docker-compose.test.yaml)`; the same suite runs in CI through the [CI Test workflow](.github/workflows/ci-test.yml). A lighter [pre-commit workflow](.github/workflows/pre-commit.yml) gates formatting and linting.
 
 ## License
 
