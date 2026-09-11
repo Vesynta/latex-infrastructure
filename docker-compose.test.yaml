@@ -1,11 +1,12 @@
+# name: isolates this project from the DevContainer compose stack.
+name: latex-infrastructure-ci
+
 services:
   ci-test:
     build:
       context: .
       dockerfile: Dockerfile
       target: test
-      args:
-        TEX_IMAGE_TAG: ${TEX_IMAGE_TAG:-latest-full}
     volumes:
       - .:/work:ro   # exposes Dockerfile + .hadolint.yaml to the in-container hadolint
     working_dir: /work

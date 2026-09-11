@@ -4,8 +4,23 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+    groups:
+      docker-prod:
+        patterns:
+          - "mcr.microsoft.com/devcontainers/base"
+          - "texlive/texlive"
+      docker-unpublished:
+        patterns:
+          - "docker"
+          - "jdxcode/mise"
+          - "ohmyzsh/ohmyzsh"
+          - "hadolint/hadolint"

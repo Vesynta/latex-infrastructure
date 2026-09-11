@@ -10,17 +10,70 @@ on:
 
 jobs:
   ci-test:
-    name: Run Dockerized Test Suite
+    name: Build stages and run tests
     runs-on: ubuntu-latest
     # Skip draft PRs.
     if: github.event.pull_request.draft != true
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Run CI Tests via Docker
-        run: make ci-test
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-      - name: Tear down test stack
-        if: always()
-        run: make clean
+      # Persist apt cache mounts across ephemeral runners; type=cache mounts are
+      # excluded from committed layers, so buildkit-cache-dance bridges that gap.
+      - name: Cache apt mounts
+        uses: actions/cache@v6
+        with:
+          path: |
+            var-cache-apt
+            var-lib-apt
+          key: apt-cache-${{ hashFiles('Dockerfile') }}
+          restore-keys: |
+            apt-cache-
+
+      - name: Inject apt cache into BuildKit
+        uses: reproducible-containers/buildkit-cache-dance@v3
+        with:
+          cache-map: |
+            {
+              "var-cache-apt": "/var/cache/apt",
+              "var-lib-apt": "/var/lib/apt"
+            }
+
+      - name: Build prod stage
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: prod
+          load: true
+          tags: latex-infrastructure:ci-prod
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build test stage
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: test
+          load: true
+          tags: latex-infrastructure:ci-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build dev stage
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: dev
+          load: true
+          tags: latex-infrastructure:ci-dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run smoke test suite
+        run: docker run --rm -v "${{ github.workspace }}:/work:ro" -w /work latex-infrastructure:ci-test

@@ -1,17 +1,29 @@
 # syntax=docker/dockerfile:1
 
-# Tag of the upstream texlive/texlive image to pull the TeX Live tree from.
-# Overridable at build time (e.g. --build-arg TEX_IMAGE_TAG=latest-medium).
-ARG TEX_IMAGE_TAG=latest-full
+# Overridable TeX Live source. The default is digest-pinned; pass a full
+# image ref to trade size against coverage (e.g. latest-medium). Makefile
+# maps TEX_IMAGE_TAG=latest-medium onto this ARG.
+ARG TEXLIVE_IMAGE=texlive/texlive:latest-full@sha256:66446fb092ef02d6dc31bba079d9bdc83e8a6af00562c6062bb97ae8e91814ea
 
 # Stage 1: a throwaway stage that only exists so we can copy the prebuilt
 # TeX Live installation out of the official image.
-FROM texlive/texlive:${TEX_IMAGE_TAG} AS texlive-source
+# Default is tag@digest; ARG keeps the documented override.
+# hadolint ignore=DL3006
+FROM ${TEXLIVE_IMAGE} AS texlive-source
+
+# Vendor images for the maintainer `dev` stage only (Dependabot reads FROM).
+# Unused when building `--target prod` / `--target test`.
+FROM docker:29.7.2-cli@sha256:3f4743208d2338c934d7b8bcfbe1bb54c0b2355c510ad5e0f31c0c4a54bd704e AS dockercli
+FROM jdxcode/mise:2026.9.2@sha256:812f7860a2fb911e1d5dd3375834abb2a08f8c783a23f783fcbccaf7fc7357aa AS mise
+FROM ohmyzsh/ohmyzsh:master-zsh5.9.2@sha256:d8e42cdf443a8a2c4826dec5efea613866c9dce59d41821148b1ab899b2f2b05 AS omz
 
 # ---------------------------------------------------------------------------
 # base: shared TeX Live tree + system deps + pandoc + a quality font set.
+# ubuntu26.04 is Ubuntu 26.04 LTS (resolute); the unversioned `ubuntu` tag
+# tracks the current LTS and is not pinned. Digest keeps the tag from drifting.
+# Cache-mount IDs: https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md
 # ---------------------------------------------------------------------------
-FROM mcr.microsoft.com/devcontainers/base:ubuntu AS base
+FROM mcr.microsoft.com/devcontainers/base:ubuntu26.04@sha256:edfb983aab9c579a385dc23c57d7d3703f5ec920124d99c16204a2cac465aab4 AS base
 
 # The symlink RUN below pipes `ls` into `head`; pipefail makes the build fail
 # fast on a broken pipe and keeps hadolint's DL4006 happy.
@@ -20,9 +32,15 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # The Ubuntu base ships /etc/apt/apt.conf.d/docker-clean, which deletes cached
 # .debs after install and would defeat the BuildKit cache mounts below. Drop it
 # and tell apt to keep downloaded packages so the cache mounts can reuse them.
+# HTTPS + retries: Canonical's default sources use http://, which times out when
+# outbound port 80 is blocked. Fail closed on update so a mirror outage cannot
+# continue into a fake "package has no installation candidate" error.
 # Set once here in base; inherited by every downstream stage.
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
-  && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+  && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
+  && echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/99retries \
+  && find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) \
+    -exec sed -i -E 's#http://(archive|security)\.ubuntu\.com#https://\1.ubuntu.com#g' {} +
 
 # Bring the full TeX Live tree across from the upstream image, chowning it to
 # the vscode user as part of the copy. Doing it here (rather than a separate
@@ -73,10 +91,11 @@ ENV INFOPATH="/usr/local/texlive/current/texmf-dist/doc/info:"
 # Cache mounts let repeat builds reuse the downloaded .debs and apt lists. They
 # are excluded from the committed layer, so the image stays lean without an
 # explicit apt clean (which is why the old clean/rm tail is gone).
-RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
-  --mount=type=cache,target=/var/lib/apt,sharing=shared,uid=0,gid=0 \
+# sharing=locked: apt is not safe for concurrent writers on a shared ID.
+RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=vesynta-apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
-  && apt-get update \
+  && apt-get --error-on=any update \
   && apt-get install -y --no-install-recommends \
   make \
   perl \
@@ -109,7 +128,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
 # devcontainers mounting a named volume at ~/.config/gh inherit writable
 # ownership (Docker initialises empty volumes from the image path's uid/gid).
 RUN mkdir -p /home/vscode/.config/gh \
-  && chown -R vscode:vscode /home/vscode/.config
+  && chown -R vscode:vscode /home/vscode/.config \
+  && git config --system credential.helper '!gh auth git-credential'
 
 # ---------------------------------------------------------------------------
 # prod: the published GHCR image. Just base plus pre-built font caches so the
@@ -124,7 +144,8 @@ RUN luaotfload-tool -u -v && fc-cache -fv
 # ---------------------------------------------------------------------------
 FROM prod AS test
 USER root
-COPY --from=hadolint/hadolint:latest /bin/hadolint /usr/local/bin/hadolint
+COPY --from=hadolint/hadolint:v2.12.0@sha256:30a8fd2e785ab6176eed53f74769e04f125afb2f74a6c52aef7d463583b6d45e \
+  /bin/hadolint /usr/local/bin/hadolint
 COPY .hadolint.yaml /opt/test/.hadolint.yaml
 COPY .chktexrc /opt/test/.chktexrc
 COPY Dockerfile /opt/test/Dockerfile
@@ -134,20 +155,33 @@ USER vscode
 CMD ["/opt/test/run-tests.sh"]
 
 # ---------------------------------------------------------------------------
-# dev: test + maintainer doc tooling (mdformat, pre-commit). Inherits the
-# hadolint binary from the test stage, so the editor extension finds it on
-# PATH. CMD is reset so the inherited test command doesn't run.
+# dev: test + maintainer doc tooling (mdformat, pre-commit), baked Docker CLI,
+# mise Node 22 (Claude Code), and zsh overlay. Inherits the hadolint
+# binary from the test stage. CMD is reset so the inherited test command
+# doesn't run. Do not fold this into prod — publications consumes GHCR prod.
 # ---------------------------------------------------------------------------
 FROM test AS dev
 USER root
+
+ENV MISE_DATA_DIR=/mise \
+  MISE_CONFIG_DIR=/mise \
+  MISE_CACHE_DIR=/mise/cache \
+  MISE_YES=1 \
+  PATH="/mise/shims:${PATH}"
+# Unix account for docker-init.sh (not a credential).
+# hadolint ignore=DL3064
+ENV DOCKER_INIT_USERNAME=vscode
+
 # apt + pip cache mounts; the keep-cache config from base is inherited. pip's
 # --no-cache-dir is dropped so the cache mount is actually used.
-RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
-  --mount=type=cache,target=/var/lib/apt,sharing=shared,uid=0,gid=0 \
-  --mount=type=cache,target=/root/.cache/pip,sharing=shared,uid=0,gid=0 \
+RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=vesynta-apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=vesynta-pip,target=/root/.cache/pip,sharing=locked,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
-  && apt-get update \
-  && apt-get install -y --no-install-recommends python3-venv \
+  && apt-get --error-on=any update \
+  && apt-get install -y --no-install-recommends \
+  python3-venv \
+  socat \
   && python3 -m venv /opt/docs-tools \
   && /opt/docs-tools/bin/pip install \
   mdformat \
@@ -156,5 +190,49 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=shared,uid=0,gid=0 \
   pre-commit \
   && ln -s /opt/docs-tools/bin/mdformat /usr/local/bin/mdformat \
   && ln -s /opt/docs-tools/bin/pre-commit /usr/local/bin/pre-commit
+
+# Passwordless sudo + docker group for baked DooD (not a Dev Container feature).
+RUN echo 'vscode ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/vscode \
+  && chmod 0440 /etc/sudoers.d/vscode \
+  && groupadd --system docker \
+  && usermod -aG docker vscode
+
+COPY --from=mise /usr/local/bin/mise /usr/local/bin/mise
+RUN --mount=type=cache,id=vesynta-mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
+  mise use -g node@22 \
+  && mise reshim \
+  && chmod -R a+rX /mise
+
+# Docker CLI + compose/buildx from a pinned image (not a Dev Container feature).
+COPY --from=dockercli /usr/local/bin/docker /usr/local/bin/docker
+COPY --from=dockercli /usr/local/libexec/docker/cli-plugins /usr/local/libexec/docker/cli-plugins
+COPY --chown=root:root --chmod=0755 \
+  .devcontainer/docker-init.sh \
+  /usr/local/share/docker-init.sh
+RUN ln -sfn /var/run/docker-host.sock /var/run/docker.sock
+
+# Claude Code via mise Node (not the Anthropic Dev Container feature).
+RUN --mount=type=cache,id=vesynta-mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
+  mise exec -- npm install -g "@anthropic-ai/claude-code@2.1.247" \
+  && mise reshim \
+  && chmod -R a+rX /mise \
+  && claude --version
+
+COPY --from=omz --chown=vscode:vscode /root/.oh-my-zsh /home/vscode/.oh-my-zsh
+COPY --chown=vscode:vscode .devcontainer/zsh/.zshrc /home/vscode/.zshrc
+RUN git clone --depth=1 --branch v0.7.1 \
+  https://github.com/zsh-users/zsh-autosuggestions.git \
+  /home/vscode/.oh-my-zsh/custom/plugins/zsh-autosuggestions \
+  && git clone --depth=1 --branch 0.8.0 \
+  https://github.com/zsh-users/zsh-syntax-highlighting.git \
+  /home/vscode/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting \
+  && rm -rf /home/vscode/.oh-my-zsh/custom/plugins/zsh-autosuggestions/.git \
+  /home/vscode/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/.git \
+  && chown -R vscode:vscode /home/vscode/.oh-my-zsh /home/vscode/.zshrc
+
 USER vscode
+# Public clone: `gh extension install` requires an authenticated gh at build (CI has none).
+RUN mkdir -p /home/vscode/.local/share/gh/extensions \
+  && git clone --depth=1 https://github.com/github/gh-stack.git \
+    /home/vscode/.local/share/gh/extensions/gh-stack
 CMD ["sleep", "infinity"]

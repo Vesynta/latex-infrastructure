@@ -1,4 +1,5 @@
 {
+  "remote.containers.copyGitConfig": false,
   // -----------------------------------
   // General Editor & Workspace Settings
   // -----------------------------------
@@ -41,17 +42,13 @@
     // this repo. The VS Code extension `bittorala.mdformat` invokes
     // `python -m mdformat` so save-in-editor matches `make format-docs`
     // and CI exactly. The interpreter is pinned via `mdformat.pythonPath`
-    // below.
+    // in .devcontainer/devcontainer.json (container venv).
     "editor.defaultFormatter": "bittorala.mdformat",
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
       "source.fixAll.markdownlint": "explicit"
     }
   },
-  // mdformat lives in the dev-stage venv (/opt/docs-tools), not on the
-  // system python. Point the extension straight at that interpreter so
-  // save-in-editor matches `make format-docs` and CI exactly.
-  "mdformat.pythonPath": "/opt/docs-tools/bin/python",
   "latex-workshop.formatting.latex": "latexindent",
   // Markdown tables: mdformat-tables owns column alignment. Keep the
   // TakumiI.markdowntable menu commands for ad-hoc CSV/TSV → table
