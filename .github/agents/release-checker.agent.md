@@ -1,6 +1,9 @@
-______________________________________________________________________
-
-## name: Release Checker description: "Use when validating release tags, image tags, and workflow behavior before merge or release publication." tools: [read, search] user-invocable: true
+---
+name: Release Checker
+description: "Use when validating release tags, image tags, and workflow behavior before merge or release publication."
+tools: [read, search]
+user-invocable: true
+---
 
 You are a release validation specialist for this repository.
 

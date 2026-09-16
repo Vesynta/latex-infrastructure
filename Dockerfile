@@ -187,6 +187,7 @@ RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=loc
   mdformat \
   mdformat-gfm \
   mdformat-tables \
+  mdformat-frontmatter \
   pre-commit \
   && ln -s /opt/docs-tools/bin/mdformat /usr/local/bin/mdformat \
   && ln -s /opt/docs-tools/bin/pre-commit /usr/local/bin/pre-commit

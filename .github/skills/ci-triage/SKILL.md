@@ -1,6 +1,9 @@
-______________________________________________________________________
-
-## name: ci-triage description: 'Triage failing CI checks in this repository. Use when a workflow fails, when diagnosing pre-commit or Dockerized test failures, and when identifying root cause plus minimal fix.' argument-hint: 'Failure context or workflow name' user-invocable: true
+---
+name: ci-triage
+description: 'Triage failing CI checks in this repository. Use when a workflow fails, when diagnosing pre-commit or Dockerized test failures, and when identifying root cause plus minimal fix.'
+argument-hint: 'Failure context or workflow name'
+user-invocable: true
+---
 
 # CI Triage
 

@@ -22,7 +22,9 @@ repos:
     rev: 0.7.22
     hooks:
       - id: mdformat
-        additional_dependencies: [mdformat-gfm, mdformat-tables]
+        # mdformat-frontmatter keeps YAML frontmatter (skills, agents) intact;
+        # without it mdformat rewrites `---` into a thematic break.
+        additional_dependencies: [mdformat-gfm, mdformat-tables, mdformat-frontmatter]
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.10.0.1
     hooks:
