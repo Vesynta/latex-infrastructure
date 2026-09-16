@@ -24,15 +24,16 @@ unset -f path_prepend
 
 # Persist history across DevContainer rebuilds (bind-mounted workspace).
 if [[ -z "${HISTFILE:-}" ]]; then
-	if [[ -d /app/.persist ]]; then
-		HISTFILE=/app/.persist/zsh_history
-	elif [[ -d /code/.persist ]]; then
-		HISTFILE=/code/.persist/zsh_history
-	elif [[ -d /repo/.persist ]]; then
-		HISTFILE=/repo/.persist/zsh_history
-	else
-		HISTFILE="${HOME}/.zsh_history"
-	fi
+	# Compose binds the repository at /workspaces/<name>; a gitignored
+	# .persist/ directory there survives container rebuilds.
+	HISTFILE="${HOME}/.zsh_history"
+	for _ws in /workspaces/*(N/); do
+		if [[ -d "${_ws}/.persist" ]]; then
+			HISTFILE="${_ws}/.persist/zsh_history"
+			break
+		fi
+	done
+	unset _ws
 fi
 export HISTFILE
 HISTSIZE=200000

@@ -27,35 +27,6 @@ Left is the **bottom**, right is the **top**. `auth` is based on `main` and merg
 Foundational work belongs at the bottom, code that depends on it above. For how to choose the
 layers, read `references/stack-design.md`.
 
-## This repo (Vesynta)
-
-Git HTTPS must use the persisted `gh` login (`gh auth git-credential`). Windows Git Credential
-Manager helpers copied from a host gitconfig (`manager`, `wincred`) are invalid in these Linux
-images — [`.devcontainer/setup-git-https.sh`](../../../.devcontainer/setup-git-https.sh) strips
-them. Do not install GCM in the container. Do not PATH-wrap `git` to inject `-c credential.helper`
-(deadlock if the helper calls `git`). Do not set `GIT_CONFIG_NOSYSTEM` (drops `safe.directory`).
-Do not print `gh auth token` or enable `GIT_TRACE` / `GIT_CURL_VERBOSE` in logs or docs.
-
-When this tree is a nested clone under another repo’s `.agents/context/`, leftover-ci and any
-`git commit` / `gh stack add -Am` run in **that clone’s** DevContainer image (see
-`nested-context-work`). Host `gh stack view --json` / `gh pr edit` are fine.
-
-`GIT_TERMINAL_PROMPT=0`. Always pass a stack/PR/branch to `checkout`. A successful `checkout` is
-not proof that `git fetch` / `git push` work.
-
-Some repos run a long leftover-ci / pre-push (`make check`, husky, terraform test)
-before pack upload. Auth hang: `git-remote-https` idle, no `make`/`terraform` children.
-Hook: tflint/terraform/trivy/pnpm.
-
-Smoke before treating stacks as built-in (non-TTY):
-
-```bash
-GIT_TERMINAL_PROMPT=0 git ls-remote origin HEAD </dev/null
-```
-
-Stderr must not mention `credential-manager` or `wincred`. Then `gh stack view --json` (exit 2 =
-not in a stack, OK; exit 9 = stacked PRs not enabled on the repo).
-
 ## Setup
 
 ```bash

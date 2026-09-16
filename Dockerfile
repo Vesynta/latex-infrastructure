@@ -21,7 +21,8 @@ FROM ohmyzsh/ohmyzsh:master-zsh5.9.2@sha256:d8e42cdf443a8a2c4826dec5efea613866c9
 # base: shared TeX Live tree + system deps + pandoc + a quality font set.
 # ubuntu26.04 is Ubuntu 26.04 LTS (resolute); the unversioned `ubuntu` tag
 # tracks the current LTS and is not pinned. Digest keeps the tag from drifting.
-# Cache-mount IDs: https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md
+# Cache-mount IDs (`vesynta-*`) are stable, namespaced names so BuildKit can
+# reuse the apt/pip/mise caches across builds. Keep the prefix; do not rename.
 # ---------------------------------------------------------------------------
 FROM mcr.microsoft.com/devcontainers/base:ubuntu26.04@sha256:edfb983aab9c579a385dc23c57d7d3703f5ec920124d99c16204a2cac465aab4 AS base
 
@@ -158,7 +159,7 @@ CMD ["/opt/test/run-tests.sh"]
 # dev: test + maintainer doc tooling (mdformat, pre-commit), baked Docker CLI,
 # mise Node 22 (Claude Code), and zsh overlay. Inherits the hadolint
 # binary from the test stage. CMD is reset so the inherited test command
-# doesn't run. Do not fold this into prod — publications consumes GHCR prod.
+# doesn't run. Do not fold this into prod — consumers pull prod from GHCR.
 # ---------------------------------------------------------------------------
 FROM test AS dev
 USER root

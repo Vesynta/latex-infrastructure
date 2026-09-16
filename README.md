@@ -94,7 +94,7 @@ A few things to keep in mind:
 
 ## Publishing
 
-The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the image and pushes it to GHCR on every push to `main` and `dev`, and on manual `workflow_dispatch`. It uses GitHub Actions cache (`type=gha`) plus cache-dance for apt mounts on ephemeral `ubuntu-latest` runners. Cache-mount IDs (`vesynta-*`) are shared with other Vesynta builders: [infrastructure](https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md) `docs/docker-build-cache.md`. Tags are derived automatically by `[docker/metadata-action](https://github.com/docker/metadata-action)`.
+The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the image and pushes it to GHCR on every push to `main` and `dev`, and on manual `workflow_dispatch`. It uses GitHub Actions cache (`type=gha`) plus cache-dance for apt mounts on ephemeral `ubuntu-latest` runners. Cache-mount IDs (`vesynta-*`) are stable, namespaced names so BuildKit can reuse the apt, pip and mise caches across builds; keep the prefix and do not rename an ID without reason. Tags are derived automatically by `[docker/metadata-action](https://github.com/docker/metadata-action)`.
 
 The [CI Test workflow](.github/workflows/ci-test.yml) builds the `prod`, `test`, and `dev` stages on pull requests (without pushing) and runs the smoke-test suite, so a broken stage cannot merge green.
 
@@ -103,7 +103,7 @@ The [CI Test workflow](.github/workflows/ci-test.yml) builds the `prod`, `test`,
 > **Prerequisites:** Docker, Git, and VS Code or Cursor with the Dev Containers extension.
 
 1. Clone this repository and Command Palette → **Dev Containers: Reopen in Container**. Compose builds the `dev` stage via `[.devcontainer/docker-compose.yaml](.devcontainer/docker-compose.yaml)`.
-1. Compose mounts the host Docker socket and runs `docker-init`; there are **no** Dev Container `features`. This public image does not ship team MCP client configs.
+1. Compose mounts the host Docker socket and runs `docker-init`; there are **no** Dev Container `features` and no bundled MCP client configuration.
 1. `postCreateCommand` runs `make setup` and pre-warms pre-commit environments.
 
 Consumers should pull `prod` from GHCR (see above) rather than developing against this maintainer container.
