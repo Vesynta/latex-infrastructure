@@ -16,7 +16,7 @@ BUILD_ARGS += --build-arg TEXLIVE_IMAGE=texlive/texlive:$(TEX_IMAGE_TAG)
 endif
 
 .PHONY: build build-prod build-local build-dev ci-test lint lint-tex format-docs check-docs \
-	setup pre-commit install-hooks clean help
+	setup mcp-sync pre-commit install-hooks clean help
 
 ## build: alias for build-prod
 build: build-prod
@@ -56,8 +56,12 @@ format-docs:
 check-docs:
 	mdformat --check $(shell git ls-files '*.md')
 
-## setup: install git hooks
-setup: install-hooks
+## setup: install git hooks and sync the IDE MCP configs
+setup: install-hooks mcp-sync
+
+## mcp-sync: link Cursor's MCP config; generate .vscode/mcp.json and .mcp.json
+mcp-sync:
+	bash .agents/mcp/sync-mcp-configs.sh
 
 ## install-hooks: install the git pre-commit hooks
 install-hooks:

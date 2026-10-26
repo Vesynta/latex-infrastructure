@@ -1,3 +1,4 @@
-# Cursor local state.
+# Cursor local state. The MCP config is a tracked symlink to ../.agents/mcp.json.
 *
 !.gitignore
+!mcp.json
