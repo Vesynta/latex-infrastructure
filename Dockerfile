@@ -13,9 +13,9 @@ FROM ${TEXLIVE_IMAGE} AS texlive-source
 
 # Vendor images for the maintainer `dev` stage only (Dependabot reads FROM).
 # Unused when building `--target prod` / `--target test`.
-FROM docker:29.7.2-cli@sha256:3f4743208d2338c934d7b8bcfbe1bb54c0b2355c510ad5e0f31c0c4a54bd704e AS dockercli
-FROM jdxcode/mise:2026.9.2@sha256:812f7860a2fb911e1d5dd3375834abb2a08f8c783a23f783fcbccaf7fc7357aa AS mise
-FROM ohmyzsh/ohmyzsh:master-zsh5.9.2@sha256:d8e42cdf443a8a2c4826dec5efea613866c9dce59d41821148b1ab899b2f2b05 AS omz
+FROM docker:29.9.2-cli@sha256:5e6baf67325a79f64ed3bed6863954d5e05d0f3d4e57cbdb14809346814bbfdb AS dockercli
+FROM jdxcode/mise:2026.10.18@sha256:fc31de7b93d195613deb600d42c65a164b0205716ade38132aadeabac3838248 AS mise
+FROM ohmyzsh/ohmyzsh:master-zsh5.9.2@sha256:3f4cbfb93183ebb040272644dfae0562899603e67045dac5e09c835ca9837390 AS omz
 
 # ---------------------------------------------------------------------------
 # base: shared TeX Live tree + system deps + pandoc + a quality font set.
