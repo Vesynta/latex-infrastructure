@@ -11,7 +11,8 @@
   "mounts": [
     "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
     "source=gh-config-${devcontainerId},target=/home/vscode/.config/gh,type=volume",
-    "source=cursor-config-${devcontainerId},target=/home/vscode/.cursor,type=volume"
+    "source=cursor-config-${devcontainerId},target=/home/vscode/.cursor,type=volume",
+    "source=zsh-history-${devcontainerId},target=/home/vscode/.local/state/zsh,type=volume"
   ],
   "customizations": {
     "vscode": {
@@ -42,6 +43,7 @@
   },
   "remoteUser": "vscode",
   "containerEnv": {
-    "GIT_TERMINAL_PROMPT": "0"
+    "GIT_TERMINAL_PROMPT": "0",
+    "HISTFILE": "/home/vscode/.local/state/zsh/history"
   },
 }

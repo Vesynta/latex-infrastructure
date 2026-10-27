@@ -236,6 +236,10 @@ RUN git clone --depth=1 --branch v0.7.1 \
   && chown -R vscode:vscode /home/vscode/.oh-my-zsh /home/vscode/.zshrc
 
 USER vscode
+# Named volumes mounted by devcontainer.json copy ownership from the image
+# path on first use, so create them as vscode before any volume exists.
+RUN mkdir -p /home/vscode/.claude /home/vscode/.local/state/zsh
+
 # gh-stack v0.1.1 is commit 2bd699a. `gh extension install` needs an
 # authenticated gh at build time (CI has none), so the extension is assembled
 # by hand: gh runs the same-named binary from the extension directory, taken
