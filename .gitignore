@@ -20,3 +20,8 @@ test/_minted*/
 # caches onto this DevContainer bind-mount (workspace root).
 .pnpm-store/
 node_modules/
+
+# MCP: Cursor reads the tracked .cursor/mcp.json symlink; make mcp-sync
+# generates the VS Code and Claude Code files.
+.vscode/mcp.json
+/.mcp.json

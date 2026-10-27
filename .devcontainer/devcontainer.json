@@ -10,7 +10,8 @@
   "postStartCommand": "bash .devcontainer/setup-git-https.sh",
   "mounts": [
     "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
-    "source=gh-config-${devcontainerId},target=/home/vscode/.config/gh,type=volume"
+    "source=gh-config-${devcontainerId},target=/home/vscode/.config/gh,type=volume",
+    "source=cursor-config-${devcontainerId},target=/home/vscode/.cursor,type=volume"
   ],
   "customizations": {
     "vscode": {

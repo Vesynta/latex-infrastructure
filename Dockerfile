@@ -124,11 +124,12 @@ RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=loc
   fonts-texgyre \
   fonts-freefont-ttf
 
-# Pre-create the gh config directory owned by vscode so that consumer
-# devcontainers mounting a named volume at ~/.config/gh inherit writable
-# ownership (Docker initialises empty volumes from the image path's uid/gid).
-RUN mkdir -p /home/vscode/.config/gh \
-  && chown -R vscode:vscode /home/vscode/.config \
+# Pre-create the gh and Cursor config directories owned by vscode so that
+# consumer devcontainers mounting named volumes at ~/.config/gh and ~/.cursor
+# inherit writable ownership (Docker initialises empty volumes from the image
+# path's uid/gid).
+RUN mkdir -p /home/vscode/.config/gh /home/vscode/.cursor \
+  && chown -R vscode:vscode /home/vscode/.config /home/vscode/.cursor \
   && git config --system credential.helper '!gh auth git-credential'
 
 # ---------------------------------------------------------------------------
