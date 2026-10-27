@@ -4,4 +4,4 @@ ______________________________________________________________________
 
 # Tooling workflow
 
-`make help` lists targets. Leftover-ci: `make lint`, `make check-docs`, `make pre-commit`. Sibling clones: [`nested-context-work`](../nested-context-work/SKILL.md). Disk quota: that skill’s safe prune (never volumes).
+`make help` lists targets. Local checks: `make lint`, `make check-docs`, `make pre-commit`. Repos cloned under `.agents/context/`: [`nested-context-work`](../nested-context-work/SKILL.md). Disk quota: that skill’s safe prune (never volumes).

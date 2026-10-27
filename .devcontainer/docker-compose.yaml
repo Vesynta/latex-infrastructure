@@ -9,8 +9,6 @@ services:
         required: true
       - path: ../.env
         required: false
-    environment:
-      DOCKER_INIT_USERNAME: vscode
     volumes:
       - ..:/workspaces/latex-infrastructure:cached
       - /var/run/docker.sock:/var/run/docker-host.sock

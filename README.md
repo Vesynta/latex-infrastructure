@@ -1,6 +1,6 @@
 # latex-infrastructure
 
-This repository builds and publishes a Docker base image for LaTeX development inside [VS Code Dev Containers](https://containers.dev/). The image layers a full [TeX Live](https://hub.docker.com/r/texlive/texlive) installation on top of Microsoft's `[devcontainers/base:ubuntu26.04](https://github.com/devcontainers/images/tree/main/src/base-ubuntu)` image (Ubuntu 26.04 LTS, digest-pinned), so private LaTeX project repositories can pull a ready-to-compile environment from the GitHub Container Registry (GHCR) instead of installing TeX Live themselves.
+This repository builds and publishes a Docker base image for LaTeX development inside [VS Code Dev Containers](https://containers.dev/). The image layers a full [TeX Live](https://hub.docker.com/r/texlive/texlive) installation on top of Microsoft's `[devcontainers/base:ubuntu26.04](https://github.com/devcontainers/images/tree/main/src/base-ubuntu)` image (Ubuntu 26.04 LTS, digest-pinned), so LaTeX projects can pull a ready-to-compile environment from the GitHub Container Registry (GHCR) instead of installing TeX Live themselves.
 
 The published image is available at:
 
@@ -52,7 +52,7 @@ Useful upstream tags include `latest-full`, `latest-medium`, `latest-basic`, and
 
 ## Using the image in another repository
 
-In a private LaTeX project, reference the published image directly from your `.devcontainer/devcontainer.json`:
+In your LaTeX project, reference the published image directly from your `.devcontainer/devcontainer.json`:
 
 ```jsonc
 {
@@ -94,7 +94,7 @@ A few things to keep in mind:
 
 ## Publishing
 
-The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the image and pushes it to GHCR on every push to `main` and `dev`, and on manual `workflow_dispatch`. It uses GitHub Actions cache (`type=gha`) plus cache-dance for apt mounts on ephemeral `ubuntu-latest` runners. Cache-mount IDs (`vesynta-*`) are shared with other Vesynta builders: [infrastructure](https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md) `docs/docker-build-cache.md`. Tags are derived automatically by `[docker/metadata-action](https://github.com/docker/metadata-action)`.
+The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the image and pushes it to GHCR on every push to `main` and `dev`, and on manual `workflow_dispatch`. It uses GitHub Actions cache (`type=gha`) plus cache-dance for apt mounts on ephemeral `ubuntu-latest` runners. The cache-dance map names each mount's `id`, matching the explicit cache-mount IDs in the [Dockerfile](Dockerfile). Tags are derived automatically by `[docker/metadata-action](https://github.com/docker/metadata-action)`.
 
 The [CI Test workflow](.github/workflows/ci-test.yml) builds the `prod`, `test`, and `dev` stages on pull requests (without pushing) and runs the smoke-test suite, so a broken stage cannot merge green.
 

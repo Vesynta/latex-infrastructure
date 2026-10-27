@@ -22,18 +22,8 @@ path_prepend() {
 export PATH
 unset -f path_prepend
 
-# Persist history across DevContainer rebuilds (bind-mounted workspace).
-if [[ -z "${HISTFILE:-}" ]]; then
-	if [[ -d /app/.persist ]]; then
-		HISTFILE=/app/.persist/zsh_history
-	elif [[ -d /code/.persist ]]; then
-		HISTFILE=/code/.persist/zsh_history
-	elif [[ -d /repo/.persist ]]; then
-		HISTFILE=/repo/.persist/zsh_history
-	else
-		HISTFILE="${HOME}/.zsh_history"
-	fi
-fi
+# devcontainer.json points HISTFILE at a named volume so history survives rebuilds.
+: "${HISTFILE:=${HOME}/.zsh_history}"
 export HISTFILE
 HISTSIZE=200000
 SAVEHIST=200000

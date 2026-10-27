@@ -16,7 +16,7 @@ test/_minted*/
 .env
 .env.local
 
-# Nested sibling clones under .agents/context/ may leak package-manager
+# Repositories cloned under .agents/context/ may leak package-manager
 # caches onto this DevContainer bind-mount (workspace root).
 .pnpm-store/
 node_modules/

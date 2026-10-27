@@ -21,7 +21,9 @@ FROM ohmyzsh/ohmyzsh:master-zsh5.9.2@sha256:d8e42cdf443a8a2c4826dec5efea613866c9
 # base: shared TeX Live tree + system deps + pandoc + a quality font set.
 # ubuntu26.04 is Ubuntu 26.04 LTS (resolute); the unversioned `ubuntu` tag
 # tracks the current LTS and is not pinned. Digest keeps the tag from drifting.
-# Cache-mount IDs: https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md
+# Cache mounts use explicit IDs. apt package lists are keyed by distro and
+# release so a build for another base can never reuse them; downloaded .debs
+# carry their version in the filename and can share one cache.
 # ---------------------------------------------------------------------------
 FROM mcr.microsoft.com/devcontainers/base:ubuntu26.04@sha256:edfb983aab9c579a385dc23c57d7d3703f5ec920124d99c16204a2cac465aab4 AS base
 
@@ -92,8 +94,8 @@ ENV INFOPATH="/usr/local/texlive/current/texmf-dist/doc/info:"
 # are excluded from the committed layer, so the image stays lean without an
 # explicit apt clean (which is why the old clean/rm tail is gone).
 # sharing=locked: apt is not safe for concurrent writers on a shared ID.
-RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
-  --mount=type=cache,id=vesynta-apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
+RUN --mount=type=cache,id=apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
   && apt-get --error-on=any update \
   && apt-get install -y --no-install-recommends \
@@ -159,9 +161,12 @@ CMD ["/opt/test/run-tests.sh"]
 # dev: test + maintainer doc tooling (mdformat, pre-commit), baked Docker CLI,
 # mise Node 22 (Claude Code), and zsh overlay. Inherits the hadolint
 # binary from the test stage. CMD is reset so the inherited test command
-# doesn't run. Do not fold this into prod — publications consumes GHCR prod.
+# doesn't run. Do not fold this into prod: downstream projects consume the
+# published prod image.
 # ---------------------------------------------------------------------------
 FROM test AS dev
+# SHELL is inherited from base; hadolint checks each stage on its own.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 USER root
 
 ENV MISE_DATA_DIR=/mise \
@@ -175,9 +180,9 @@ ENV DOCKER_INIT_USERNAME=vscode
 
 # apt + pip cache mounts; the keep-cache config from base is inherited. pip's
 # --no-cache-dir is dropped so the cache mount is actually used.
-RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
-  --mount=type=cache,id=vesynta-apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
-  --mount=type=cache,id=vesynta-pip,target=/root/.cache/pip,sharing=locked,uid=0,gid=0 \
+RUN --mount=type=cache,id=apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=pip,target=/root/.cache/pip,sharing=locked,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
   && apt-get --error-on=any update \
   && apt-get install -y --no-install-recommends \
@@ -199,7 +204,7 @@ RUN echo 'vscode ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/vscode \
   && usermod -aG docker vscode
 
 COPY --from=mise /usr/local/bin/mise /usr/local/bin/mise
-RUN --mount=type=cache,id=vesynta-mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
+RUN --mount=type=cache,id=mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
   mise use -g node@22 \
   && mise reshim \
   && chmod -R a+rX /mise
@@ -213,7 +218,7 @@ COPY --chown=root:root --chmod=0755 \
 RUN ln -sfn /var/run/docker-host.sock /var/run/docker.sock
 
 # Claude Code via mise Node (not the Anthropic Dev Container feature).
-RUN --mount=type=cache,id=vesynta-mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
+RUN --mount=type=cache,id=mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
   mise exec -- npm install -g "@anthropic-ai/claude-code@2.1.247" \
   && mise reshim \
   && chmod -R a+rX /mise \
@@ -232,8 +237,31 @@ RUN git clone --depth=1 --branch v0.7.1 \
   && chown -R vscode:vscode /home/vscode/.oh-my-zsh /home/vscode/.zshrc
 
 USER vscode
-# Public clone: `gh extension install` requires an authenticated gh at build (CI has none).
-RUN mkdir -p /home/vscode/.local/share/gh/extensions \
-  && git clone --depth=1 https://github.com/github/gh-stack.git \
-    /home/vscode/.local/share/gh/extensions/gh-stack
+# Named volumes mounted by devcontainer.json copy ownership from the image
+# path on first use, so create them as vscode before any volume exists.
+RUN mkdir -p /home/vscode/.claude /home/vscode/.local/state/zsh
+
+# gh-stack v0.1.1 is commit 2bd699a. `gh extension install` needs an
+# authenticated gh at build time (CI has none), so the extension is assembled
+# by hand: gh runs the same-named binary from the extension directory, taken
+# from the release and checked against its sha256.
+ARG TARGETARCH
+ARG GH_STACK_COMMIT=2bd699a544a09cb5c45a013d03416e0894b0454e
+ARG GH_STACK_RELEASE=v0.1.1
+RUN ext=/home/vscode/.local/share/gh/extensions/gh-stack \
+  && case "${TARGETARCH}" in \
+    amd64) asset=linux-amd64; sha=9ed103934fab0f90d3341fdfc4a342785396d39f5621fc7313a62602ce2b5462 ;; \
+    arm64) asset=linux-arm64; sha=2da13f8c46f2770237c744b341ab6be9f07508585a6762634c4a88aa355460bc ;; \
+    *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+  esac \
+  && git init -q /tmp/gh-stack \
+  && git -C /tmp/gh-stack fetch -q --depth=1 https://github.com/github/gh-stack.git "${GH_STACK_COMMIT}" \
+  && git -C /tmp/gh-stack checkout -q --detach FETCH_HEAD \
+  && mkdir -p "${ext}" \
+  && cp -a /tmp/gh-stack/. "${ext}/" \
+  && rm -rf /tmp/gh-stack \
+  && curl -fsSL --retry 5 --retry-all-errors -o "${ext}/gh-stack" \
+    "https://github.com/github/gh-stack/releases/download/${GH_STACK_RELEASE}/${asset}" \
+  && echo "${sha}  ${ext}/gh-stack" | sha256sum -c - \
+  && chmod 0755 "${ext}/gh-stack"
 CMD ["sleep", "infinity"]
