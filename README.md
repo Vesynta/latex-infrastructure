@@ -1,6 +1,6 @@
 # latex-infrastructure
 
-This repository builds and publishes a Docker base image for LaTeX development inside [VS Code Dev Containers](https://containers.dev/). The image layers a full [TeX Live](https://hub.docker.com/r/texlive/texlive) installation on top of Microsoft's `[devcontainers/base:ubuntu26.04](https://github.com/devcontainers/images/tree/main/src/base-ubuntu)` image (Ubuntu 26.04 LTS, digest-pinned), so private LaTeX project repositories can pull a ready-to-compile environment from the GitHub Container Registry (GHCR) instead of installing TeX Live themselves.
+This repository builds and publishes a Docker base image for LaTeX development inside [VS Code Dev Containers](https://containers.dev/). The image layers a full [TeX Live](https://hub.docker.com/r/texlive/texlive) installation on top of Microsoft's `[devcontainers/base:ubuntu26.04](https://github.com/devcontainers/images/tree/main/src/base-ubuntu)` image (Ubuntu 26.04 LTS, digest-pinned), so LaTeX projects can pull a ready-to-compile environment from the GitHub Container Registry (GHCR) instead of installing TeX Live themselves.
 
 The published image is available at:
 
@@ -52,7 +52,7 @@ Useful upstream tags include `latest-full`, `latest-medium`, `latest-basic`, and
 
 ## Using the image in another repository
 
-In a private LaTeX project, reference the published image directly from your `.devcontainer/devcontainer.json`:
+In your LaTeX project, reference the published image directly from your `.devcontainer/devcontainer.json`:
 
 ```jsonc
 {

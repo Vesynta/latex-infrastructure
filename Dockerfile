@@ -161,7 +161,8 @@ CMD ["/opt/test/run-tests.sh"]
 # dev: test + maintainer doc tooling (mdformat, pre-commit), baked Docker CLI,
 # mise Node 22 (Claude Code), and zsh overlay. Inherits the hadolint
 # binary from the test stage. CMD is reset so the inherited test command
-# doesn't run. Do not fold this into prod — publications consumes GHCR prod.
+# doesn't run. Do not fold this into prod: downstream projects consume the
+# published prod image.
 # ---------------------------------------------------------------------------
 FROM test AS dev
 # SHELL is inherited from base; hadolint checks each stage on its own.
