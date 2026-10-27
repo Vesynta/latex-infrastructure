@@ -25,7 +25,7 @@ FROM ohmyzsh/ohmyzsh:master-zsh5.9.2@sha256:d8e42cdf443a8a2c4826dec5efea613866c9
 # release so a build for another base can never reuse them; downloaded .debs
 # carry their version in the filename and can share one cache.
 # ---------------------------------------------------------------------------
-FROM mcr.microsoft.com/devcontainers/base:ubuntu26.04@sha256:edfb983aab9c579a385dc23c57d7d3703f5ec920124d99c16204a2cac465aab4 AS base
+FROM mcr.microsoft.com/devcontainers/base:ubuntu26.04@sha256:91eff046d5c12318fc98e59258982b87ba896c467427ed8b5dab5a02107a5db7 AS base
 
 # The symlink RUN below pipes `ls` into `head`; pipefail makes the build fail
 # fast on a broken pipe and keeps hadolint's DL4006 happy.
