@@ -41,8 +41,8 @@ jobs:
         with:
           cache-map: |
             {
-              "var-cache-apt": "/var/cache/apt",
-              "var-lib-apt": "/var/lib/apt"
+              "var-cache-apt": { "target": "/var/cache/apt", "id": "apt-archives" },
+              "var-lib-apt": { "target": "/var/lib/apt", "id": "apt-lists-ubuntu-resolute" }
             }
 
       - name: Build prod stage

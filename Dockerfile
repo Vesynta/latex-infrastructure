@@ -21,7 +21,9 @@ FROM ohmyzsh/ohmyzsh:master-zsh5.9.2@sha256:d8e42cdf443a8a2c4826dec5efea613866c9
 # base: shared TeX Live tree + system deps + pandoc + a quality font set.
 # ubuntu26.04 is Ubuntu 26.04 LTS (resolute); the unversioned `ubuntu` tag
 # tracks the current LTS and is not pinned. Digest keeps the tag from drifting.
-# Cache-mount IDs: https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md
+# Cache mounts use explicit IDs. apt package lists are keyed by distro and
+# release so a build for another base can never reuse them; downloaded .debs
+# carry their version in the filename and can share one cache.
 # ---------------------------------------------------------------------------
 FROM mcr.microsoft.com/devcontainers/base:ubuntu26.04@sha256:edfb983aab9c579a385dc23c57d7d3703f5ec920124d99c16204a2cac465aab4 AS base
 
@@ -92,8 +94,8 @@ ENV INFOPATH="/usr/local/texlive/current/texmf-dist/doc/info:"
 # are excluded from the committed layer, so the image stays lean without an
 # explicit apt clean (which is why the old clean/rm tail is gone).
 # sharing=locked: apt is not safe for concurrent writers on a shared ID.
-RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
-  --mount=type=cache,id=vesynta-apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
+RUN --mount=type=cache,id=apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
   && apt-get --error-on=any update \
   && apt-get install -y --no-install-recommends \
@@ -175,9 +177,9 @@ ENV DOCKER_INIT_USERNAME=vscode
 
 # apt + pip cache mounts; the keep-cache config from base is inherited. pip's
 # --no-cache-dir is dropped so the cache mount is actually used.
-RUN --mount=type=cache,id=vesynta-apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
-  --mount=type=cache,id=vesynta-apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
-  --mount=type=cache,id=vesynta-pip,target=/root/.cache/pip,sharing=locked,uid=0,gid=0 \
+RUN --mount=type=cache,id=apt-archives,target=/var/cache/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=apt-lists-ubuntu-resolute,target=/var/lib/apt,sharing=locked,uid=0,gid=0 \
+  --mount=type=cache,id=pip,target=/root/.cache/pip,sharing=locked,uid=0,gid=0 \
   export DEBIAN_FRONTEND=noninteractive \
   && apt-get --error-on=any update \
   && apt-get install -y --no-install-recommends \
@@ -199,7 +201,7 @@ RUN echo 'vscode ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/vscode \
   && usermod -aG docker vscode
 
 COPY --from=mise /usr/local/bin/mise /usr/local/bin/mise
-RUN --mount=type=cache,id=vesynta-mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
+RUN --mount=type=cache,id=mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
   mise use -g node@22 \
   && mise reshim \
   && chmod -R a+rX /mise
@@ -213,7 +215,7 @@ COPY --chown=root:root --chmod=0755 \
 RUN ln -sfn /var/run/docker-host.sock /var/run/docker.sock
 
 # Claude Code via mise Node (not the Anthropic Dev Container feature).
-RUN --mount=type=cache,id=vesynta-mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
+RUN --mount=type=cache,id=mise,target=/mise/cache,sharing=locked,uid=0,gid=0 \
   mise exec -- npm install -g "@anthropic-ai/claude-code@2.1.247" \
   && mise reshim \
   && chmod -R a+rX /mise \

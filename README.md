@@ -94,7 +94,7 @@ A few things to keep in mind:
 
 ## Publishing
 
-The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the image and pushes it to GHCR on every push to `main` and `dev`, and on manual `workflow_dispatch`. It uses GitHub Actions cache (`type=gha`) plus cache-dance for apt mounts on ephemeral `ubuntu-latest` runners. Cache-mount IDs (`vesynta-*`) are shared with other Vesynta builders: [infrastructure](https://github.com/Vesynta/infrastructure/blob/dev/docs/docker-build-cache.md) `docs/docker-build-cache.md`. Tags are derived automatically by `[docker/metadata-action](https://github.com/docker/metadata-action)`.
+The [build-and-push workflow](.github/workflows/build-and-push.yml) builds the image and pushes it to GHCR on every push to `main` and `dev`, and on manual `workflow_dispatch`. It uses GitHub Actions cache (`type=gha`) plus cache-dance for apt mounts on ephemeral `ubuntu-latest` runners. The cache-dance map names each mount's `id`, matching the explicit cache-mount IDs in the [Dockerfile](Dockerfile). Tags are derived automatically by `[docker/metadata-action](https://github.com/docker/metadata-action)`.
 
 The [CI Test workflow](.github/workflows/ci-test.yml) builds the `prod`, `test`, and `dev` stages on pull requests (without pushing) and runs the smoke-test suite, so a broken stage cannot merge green.
 
