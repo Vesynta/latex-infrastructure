@@ -164,6 +164,8 @@ CMD ["/opt/test/run-tests.sh"]
 # doesn't run. Do not fold this into prod — publications consumes GHCR prod.
 # ---------------------------------------------------------------------------
 FROM test AS dev
+# SHELL is inherited from base; hadolint checks each stage on its own.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 USER root
 
 ENV MISE_DATA_DIR=/mise \
@@ -234,8 +236,27 @@ RUN git clone --depth=1 --branch v0.7.1 \
   && chown -R vscode:vscode /home/vscode/.oh-my-zsh /home/vscode/.zshrc
 
 USER vscode
-# Public clone: `gh extension install` requires an authenticated gh at build (CI has none).
-RUN mkdir -p /home/vscode/.local/share/gh/extensions \
-  && git clone --depth=1 https://github.com/github/gh-stack.git \
-    /home/vscode/.local/share/gh/extensions/gh-stack
+# gh-stack v0.1.1 is commit 2bd699a. `gh extension install` needs an
+# authenticated gh at build time (CI has none), so the extension is assembled
+# by hand: gh runs the same-named binary from the extension directory, taken
+# from the release and checked against its sha256.
+ARG TARGETARCH
+ARG GH_STACK_COMMIT=2bd699a544a09cb5c45a013d03416e0894b0454e
+ARG GH_STACK_RELEASE=v0.1.1
+RUN ext=/home/vscode/.local/share/gh/extensions/gh-stack \
+  && case "${TARGETARCH}" in \
+    amd64) asset=linux-amd64; sha=9ed103934fab0f90d3341fdfc4a342785396d39f5621fc7313a62602ce2b5462 ;; \
+    arm64) asset=linux-arm64; sha=2da13f8c46f2770237c744b341ab6be9f07508585a6762634c4a88aa355460bc ;; \
+    *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+  esac \
+  && git init -q /tmp/gh-stack \
+  && git -C /tmp/gh-stack fetch -q --depth=1 https://github.com/github/gh-stack.git "${GH_STACK_COMMIT}" \
+  && git -C /tmp/gh-stack checkout -q --detach FETCH_HEAD \
+  && mkdir -p "${ext}" \
+  && cp -a /tmp/gh-stack/. "${ext}/" \
+  && rm -rf /tmp/gh-stack \
+  && curl -fsSL --retry 5 --retry-all-errors -o "${ext}/gh-stack" \
+    "https://github.com/github/gh-stack/releases/download/${GH_STACK_RELEASE}/${asset}" \
+  && echo "${sha}  ${ext}/gh-stack" | sha256sum -c - \
+  && chmod 0755 "${ext}/gh-stack"
 CMD ["sleep", "infinity"]
